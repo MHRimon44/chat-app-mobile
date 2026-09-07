@@ -1,0 +1,54 @@
+name: mobile-ci
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  quality:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .node-version
+      - run: corepack enable
+      - run: yarn install --immutable
+      - run: yarn format:check
+      - run: yarn lint
+      - run: yarn typecheck
+      - run: yarn test
+
+  android:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 35
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .node-version
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+      - run: corepack enable && yarn install --immutable
+      - run: ./gradlew assembleDebug --no-daemon
+        working-directory: android
+
+  ios:
+    runs-on: macos-15
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .node-version
+      - run: corepack enable && yarn install --immutable
+      - run: bundle install && bundle exec pod install
+        working-directory: ios
+      - run: xcodebuild -workspace ios/ChatMobile.xcworkspace -scheme ChatMobile -sdk iphonesimulator -configuration Debug CODE_SIGNING_ALLOWED=NO build
