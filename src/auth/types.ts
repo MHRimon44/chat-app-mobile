@@ -1,4 +1,9 @@
-export type AuthUser = Readonly<{ id: string; displayName: string; email: string }>;
+export type AuthUser = Readonly<{
+  id: string;
+  username?: string;
+  displayName: string;
+  email: string;
+}>;
 export type TokenPair = Readonly<{
   accessToken: string;
   accessTokenExpiresAt: string;

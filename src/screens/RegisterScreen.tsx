@@ -14,6 +14,10 @@ import { useAppDispatch } from '../store/hooks';
 import { colors, spacing } from '../theme/tokens';
 
 const schema = z.object({
+  username: z
+    .string()
+    .trim()
+    .regex(/^[a-zA-Z0-9_]{3,30}$/, 'Use 3–30 letters, numbers, or underscores.'),
   displayName: z.string().trim().min(1, 'Name is required.').max(80),
   email: z.email('Enter a valid email address.'),
   password: z.string().min(12, 'Use at least 12 characters.').max(128),
@@ -24,13 +28,12 @@ export function RegisterScreen({ navigation }: Props): React.JSX.Element {
   const dispatch = useAppDispatch();
   const [register, request] = useRegisterMutation();
   const { control, handleSubmit } = useForm<Values>({
-    defaultValues: { displayName: '', email: '', password: '' },
+    defaultValues: { username: '', displayName: '', email: '', password: '' },
     resolver: zodResolver(schema),
   });
   const submit = handleSubmit(async (values) => {
     try {
       const pair = await register(values).unwrap();
-      console.log('RegisterScreen: submit: pair', pair);
       await persistTokenPair(pair, dispatch);
     } catch {
       /* rendered from request state */
@@ -38,6 +41,22 @@ export function RegisterScreen({ navigation }: Props): React.JSX.Element {
   });
   return (
     <AuthLayout subtitle="Create a secure account to start messaging." title="Create account">
+      <Controller
+        control={control}
+        name="username"
+        render={({ field, fieldState }) => (
+          <FormField
+            autoCapitalize="none"
+            autoCorrect={false}
+            error={fieldState.error?.message}
+            label="Username"
+            onBlur={field.onBlur}
+            onChangeText={field.onChange}
+            placeholder="rimon"
+            value={field.value}
+          />
+        )}
+      />
       <Controller
         control={control}
         name="displayName"

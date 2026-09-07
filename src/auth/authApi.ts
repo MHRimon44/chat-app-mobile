@@ -3,7 +3,7 @@ import { getDeviceMetadata } from './deviceMetadata';
 import type { ApiEnvelope, TokenPair } from './types';
 
 type LoginInput = { email: string; password: string };
-type RegisterInput = LoginInput & { displayName: string };
+type RegisterInput = LoginInput & { displayName: string; username: string };
 
 export const authApi = api.injectEndpoints({
   endpoints: (build) => ({

@@ -82,6 +82,9 @@ export function ConversationListScreen({ navigation }: Props): React.JSX.Element
           Chats
         </Text>
         <View style={styles.actions}>
+          <Pressable accessibilityRole="button" onPress={() => navigation.navigate('Settings')}>
+            <Text style={styles.action}>Profile</Text>
+          </Pressable>
           <Pressable accessibilityRole="button" onPress={() => navigation.navigate('UserSearch')}>
             <Text style={styles.action}>New chat</Text>
           </Pressable>

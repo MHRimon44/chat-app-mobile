@@ -20,6 +20,9 @@ const sessionSlice = createSlice({
       state.status = 'authenticated';
       state.user = action.payload.user;
     },
+    profileUpdated(state, action: PayloadAction<AuthUser>) {
+      state.user = action.payload;
+    },
     signedOut(state) {
       state.accessToken = null;
       state.status = 'anonymous';
@@ -27,5 +30,5 @@ const sessionSlice = createSlice({
     },
   },
 });
-export const { sessionRestored, signedIn, signedOut } = sessionSlice.actions;
+export const { profileUpdated, sessionRestored, signedIn, signedOut } = sessionSlice.actions;
 export const sessionReducer = sessionSlice.reducer;

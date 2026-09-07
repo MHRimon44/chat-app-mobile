@@ -9,6 +9,7 @@ import { ResetPasswordScreen } from '../screens/ResetPasswordScreen';
 import { UserProfileScreen } from '../screens/UserProfileScreen';
 import { UserSearchScreen } from '../screens/UserSearchScreen';
 import { WelcomeScreen } from '../screens/WelcomeScreen';
+import { SettingsScreen } from '../screens/SettingsScreen';
 import { useAppSelector } from '../store/hooks';
 import type { RootStackParamList } from './types';
 
@@ -21,6 +22,7 @@ export function RootNavigator(): React.JSX.Element {
       {status === 'authenticated' ? (
         <Stack.Group>
           <Stack.Screen name="ConversationList" component={ConversationListScreen} />
+          <Stack.Screen name="Settings" component={SettingsScreen} />
           <Stack.Screen name="UserSearch" component={UserSearchScreen} />
           <Stack.Screen name="UserProfile" component={UserProfileScreen} />
           <Stack.Screen name="Chat" component={ChatScreen} />
