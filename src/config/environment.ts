@@ -2,18 +2,23 @@ export function resolveDevelopmentHost(scriptUrl: unknown, platform: string): st
   if (typeof scriptUrl === 'string') {
     try {
       const hostname = new URL(scriptUrl).hostname;
-      if (hostname) return hostname;
+
+      if (hostname) {
+        return hostname;
+      }
     } catch {
       // Fall through to a platform-safe development default.
     }
   }
+
   return platform === 'android' ? '10.0.2.2' : 'localhost';
 }
 
-const localHost = '127.0.0.1';
+const PRODUCTION_API_URL = 'https://chat-app-backend-2s97.onrender.com';
+
 export const environment = {
-  apiBaseUrl: `http://${localHost}:4000`,
-  socketBaseUrl: `http://${localHost}:4000`,
+  apiBaseUrl: PRODUCTION_API_URL,
+  socketBaseUrl: PRODUCTION_API_URL,
 } as const;
 
 export function assertSecureProductionTransport(url: string): void {
