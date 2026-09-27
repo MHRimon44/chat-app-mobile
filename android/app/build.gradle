@@ -103,3 +103,10 @@ dependencies {
         implementation jscFlavor
     }
 }
+
+// Rebundle release JavaScript whenever the selected .env values change.
+tasks.configureEach { task ->
+    if (task.name.startsWith("createBundle") && task.name.endsWith("JsAndAssets")) {
+        task.inputs.file(rootProject.file("../.env"))
+    }
+}
