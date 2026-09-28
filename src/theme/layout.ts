@@ -4,6 +4,7 @@ export const layout = {
   screen: {
     horizontalPadding: 20,
     verticalPadding: 16,
+    keyboardBottomPadding: 120,
     contentMaxWidth: 720,
     defaultMode: 'fixed' as const,
   },

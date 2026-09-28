@@ -1,10 +1,11 @@
 /* eslint-disable @typescript-eslint/no-unsafe-assignment */
 /* eslint-disable @typescript-eslint/no-require-imports */
-import { Image, Pressable, SafeAreaView, Text, View } from 'react-native';
+import { Image, Pressable, StatusBar, Text, View } from 'react-native';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import type { RootStackParamList } from '../../navigation/types';
 import { useAppTheme } from '../../theme/ThemeProvider';
 import { styles } from './WelcomeScreen.styles';
+import { SafeAreaView } from 'react-native-safe-area-context';
 
 const logo = require('../../../assets/logo.png');
 
@@ -15,6 +16,12 @@ export function WelcomeScreen({ navigation }: Props): React.JSX.Element {
 
   return (
     <SafeAreaView style={[styles.root, { backgroundColor: colors.background }]}>
+      <StatusBar
+        animated
+
+        barStyle={dark ? 'light-content' : 'dark-content'}
+      />
+
       <View pointerEvents="none" style={[styles.glowTop, { backgroundColor: colors.cyan }]} />
       <View pointerEvents="none" style={[styles.glowBottom, { backgroundColor: colors.accent }]} />
 

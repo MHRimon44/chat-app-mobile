@@ -113,6 +113,7 @@ export function RegisterScreen({ navigation }: Props): React.JSX.Element {
             onBlur={field.onBlur}
             onChangeText={field.onChange}
             secureTextEntry
+            showPasswordToggle
             value={field.value}
           />
         )}
