@@ -1,7 +1,7 @@
 import { zodResolver } from '@hookform/resolvers/zod';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { Controller, useForm } from 'react-hook-form';
-import { Pressable, StyleSheet, Text } from 'react-native';
+import { Pressable, Text, View } from 'react-native';
 import { z } from 'zod';
 import { useRegisterMutation } from '../../../services/api/authApi';
 import { authErrorMessage } from '../../../utils/errorMessage';
@@ -11,7 +11,7 @@ import { FormField } from '../../../components/FormField/FormField';
 import { PrimaryButton } from '../../../components/Button/Button';
 import type { RootStackParamList } from '../../../navigation/types';
 import { useAppDispatch } from '../../../store/hooks';
-import { colors, spacing } from '../../../theme/tokens';
+import { useAppTheme } from '../../../theme/ThemeProvider';
 
 const schema = z.object({
   username: z
@@ -26,6 +26,7 @@ type Values = z.infer<typeof schema>;
 type Props = NativeStackScreenProps<RootStackParamList, 'Register'>;
 export function RegisterScreen({ navigation }: Props): React.JSX.Element {
   const dispatch = useAppDispatch();
+  const { colors, typography } = useAppTheme();
   const [register, request] = useRegisterMutation();
   const { control, handleSubmit } = useForm<Values>({
     defaultValues: { username: '', displayName: '', email: '', password: '' },
@@ -40,7 +41,21 @@ export function RegisterScreen({ navigation }: Props): React.JSX.Element {
     }
   });
   return (
-    <AuthLayout subtitle="Create a secure account to start messaging." title="Create account">
+    <AuthLayout
+      icon="account-plus-outline"
+      subtitle="Create your profile and start conversations that feel closer."
+      title="Create your account"
+      footer={
+        <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+          <Text style={[typography.body, { color: colors.textMuted }]}>
+            Already have an account?{' '}
+          </Text>
+          <Pressable accessibilityRole="button" onPress={() => navigation.navigate('Login')}>
+            <Text style={[typography.bodyMedium, { color: colors.primary }]}>Sign in</Text>
+          </Pressable>
+        </View>
+      }
+    >
       <Controller
         control={control}
         name="username"
@@ -52,7 +67,7 @@ export function RegisterScreen({ navigation }: Props): React.JSX.Element {
             label="Username"
             onBlur={field.onBlur}
             onChangeText={field.onChange}
-            placeholder="rimon"
+            placeholder=""
             value={field.value}
           />
         )}
@@ -103,7 +118,7 @@ export function RegisterScreen({ navigation }: Props): React.JSX.Element {
         )}
       />
       {request.error === undefined ? null : (
-        <Text accessibilityLiveRegion="polite" style={styles.error}>
+        <Text accessibilityLiveRegion="polite" style={[typography.label, { color: colors.danger }]}>
           {authErrorMessage(request.error)}
         </Text>
       )}
@@ -114,13 +129,6 @@ export function RegisterScreen({ navigation }: Props): React.JSX.Element {
           void submit();
         }}
       />
-      <Pressable accessibilityRole="button" onPress={() => navigation.navigate('Login')}>
-        <Text style={styles.link}>I already have an account</Text>
-      </Pressable>
     </AuthLayout>
   );
 }
-const styles = StyleSheet.create({
-  error: { color: colors.danger },
-  link: { color: colors.primary, paddingVertical: spacing.sm, textAlign: 'center' },
-});

@@ -1,8 +1,9 @@
 import { ActivityIndicator, Pressable, StyleSheet, Text } from 'react-native';
-import { colors, radii, spacing, typography } from '../../theme/tokens';
+import { useAppTheme } from '../../theme/ThemeProvider';
 
 type Props = { label: string; loading?: boolean; onPress: () => void };
 export function PrimaryButton({ label, loading = false, onPress }: Props): React.JSX.Element {
+  const { colors, radii, spacing, typography } = useAppTheme();
   return (
     <Pressable
       accessibilityRole="button"
@@ -10,28 +11,23 @@ export function PrimaryButton({ label, loading = false, onPress }: Props): React
       onPress={onPress}
       style={({ pressed }) => [
         styles.button,
-        pressed ? styles.pressed : null,
+        {
+          backgroundColor: pressed ? colors.primaryPressed : colors.primary,
+          borderRadius: radii.button,
+          paddingHorizontal: spacing.lg,
+        },
         loading ? styles.disabled : null,
       ]}
     >
       {loading ? (
-        <ActivityIndicator color={colors.surface} />
+        <ActivityIndicator color={colors.onPrimary} />
       ) : (
-        <Text style={styles.label}>{label}</Text>
+        <Text style={[typography.bodyMedium, { color: colors.onPrimary }]}>{label}</Text>
       )}
     </Pressable>
   );
 }
 const styles = StyleSheet.create({
-  button: {
-    alignItems: 'center',
-    backgroundColor: colors.primary,
-    borderRadius: radii.md,
-    minHeight: 52,
-    justifyContent: 'center',
-    paddingHorizontal: spacing.lg,
-  },
-  pressed: { backgroundColor: colors.primaryPressed },
+  button: { alignItems: 'center', justifyContent: 'center', minHeight: 54 },
   disabled: { opacity: 0.65 },
-  label: { ...typography.body, color: colors.surface, fontWeight: '700' },
 });

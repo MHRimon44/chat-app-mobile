@@ -1,7 +1,7 @@
 import { zodResolver } from '@hookform/resolvers/zod';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { Controller, useForm } from 'react-hook-form';
-import { StyleSheet, Text } from 'react-native';
+import { Text } from 'react-native';
 import { z } from 'zod';
 import { useResetPasswordMutation } from '../../../services/api/authApi';
 import { authErrorMessage } from '../../../utils/errorMessage';
@@ -9,7 +9,7 @@ import { AuthLayout } from '../../../components/AuthLayout/AuthLayout';
 import { FormField } from '../../../components/FormField/FormField';
 import { PrimaryButton } from '../../../components/Button/Button';
 import type { RootStackParamList } from '../../../navigation/types';
-import { colors } from '../../../theme/tokens';
+import { useAppTheme } from '../../../theme/ThemeProvider';
 
 const schema = z.object({
   token: z.string().min(40, 'Enter the reset token.'),
@@ -18,6 +18,7 @@ const schema = z.object({
 type Values = z.infer<typeof schema>;
 type Props = NativeStackScreenProps<RootStackParamList, 'ResetPassword'>;
 export function ResetPasswordScreen({ navigation, route }: Props): React.JSX.Element {
+  const { colors, typography } = useAppTheme();
   const [reset, request] = useResetPasswordMutation();
   const { control, handleSubmit } = useForm<Values>({
     defaultValues: { password: '', token: route.params?.token ?? '' },
@@ -32,7 +33,11 @@ export function ResetPasswordScreen({ navigation, route }: Props): React.JSX.Ele
     }
   });
   return (
-    <AuthLayout subtitle="Choose a new password for your account." title="Set new password">
+    <AuthLayout
+      icon="shield-lock-outline"
+      subtitle="Choose a strong new password to keep your Alap account secure."
+      title="Set a new password"
+    >
       <Controller
         control={control}
         name="token"
@@ -63,7 +68,7 @@ export function ResetPasswordScreen({ navigation, route }: Props): React.JSX.Ele
         )}
       />
       {request.error === undefined ? null : (
-        <Text accessibilityLiveRegion="polite" style={styles.error}>
+        <Text accessibilityLiveRegion="polite" style={[typography.label, { color: colors.danger }]}>
           {authErrorMessage(request.error)}
         </Text>
       )}
@@ -77,4 +82,3 @@ export function ResetPasswordScreen({ navigation, route }: Props): React.JSX.Ele
     </AuthLayout>
   );
 }
-const styles = StyleSheet.create({ error: { color: colors.danger } });

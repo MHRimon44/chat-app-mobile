@@ -1,22 +1,36 @@
 import type { TextInputProps } from 'react-native';
 import { StyleSheet, Text, TextInput, View } from 'react-native';
-import { colors, radii, spacing, typography } from '../../theme/tokens';
+import { useAppTheme } from '../../theme/ThemeProvider';
 
 type Props = TextInputProps & { error?: string | undefined; label: string };
 
-export function FormField({ error, label, ...inputProps }: Props): React.JSX.Element {
+export function FormField({ error, label, style, ...inputProps }: Props): React.JSX.Element {
+  const { colors, radii, spacing, typography } = useAppTheme();
+
   return (
-    <View style={styles.group}>
-      <Text style={styles.label}>{label}</Text>
+    <View style={{ gap: spacing.xs }}>
+      <Text style={[typography.label, { color: colors.textSecondary }]}>{label}</Text>
       <TextInput
         accessibilityLabel={label}
         autoCapitalize="none"
-        placeholderTextColor={colors.textMuted}
-        style={[styles.input, error === undefined ? null : styles.inputError]}
+        placeholderTextColor={colors.placeholder}
+        selectionColor={colors.primary}
+        style={[
+          styles.input,
+          typography.body,
+          {
+            backgroundColor: colors.inputBackground,
+            borderColor: error === undefined ? colors.border : colors.danger,
+            borderRadius: radii.input,
+            color: colors.text,
+            paddingHorizontal: spacing.lg,
+          },
+          style,
+        ]}
         {...inputProps}
       />
       {error === undefined ? null : (
-        <Text accessibilityLiveRegion="polite" style={styles.error}>
+        <Text accessibilityLiveRegion="polite" style={[styles.error, { color: colors.danger }]}>
           {error}
         </Text>
       )}
@@ -25,18 +39,6 @@ export function FormField({ error, label, ...inputProps }: Props): React.JSX.Ele
 }
 
 const styles = StyleSheet.create({
-  group: { gap: spacing.xs },
-  label: { ...typography.body, color: colors.text, fontWeight: '600' },
-  input: {
-    ...typography.body,
-    backgroundColor: colors.surface,
-    borderColor: colors.border,
-    borderRadius: radii.md,
-    borderWidth: 1,
-    color: colors.text,
-    minHeight: 52,
-    paddingHorizontal: spacing.md,
-  },
-  inputError: { borderColor: colors.danger },
-  error: { color: colors.danger, fontSize: 14, lineHeight: 20 },
+  input: { borderWidth: 1, minHeight: 54 },
+  error: { fontSize: 13, lineHeight: 18 },
 });

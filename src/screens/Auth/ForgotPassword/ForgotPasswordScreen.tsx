@@ -1,7 +1,7 @@
 import { zodResolver } from '@hookform/resolvers/zod';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { Controller, useForm } from 'react-hook-form';
-import { StyleSheet, Text } from 'react-native';
+import { Pressable, Text, View } from 'react-native';
 import { z } from 'zod';
 import { useForgotPasswordMutation } from '../../../services/api/authApi';
 import { authErrorMessage } from '../../../utils/errorMessage';
@@ -9,13 +9,15 @@ import { AuthLayout } from '../../../components/AuthLayout/AuthLayout';
 import { FormField } from '../../../components/FormField/FormField';
 import { PrimaryButton } from '../../../components/Button/Button';
 import type { RootStackParamList } from '../../../navigation/types';
-import { colors } from '../../../theme/tokens';
+import { useAppTheme } from '../../../theme/ThemeProvider';
 
 const schema = z.object({ email: z.email('Enter a valid email address.') });
 type Values = z.infer<typeof schema>;
 export function ForgotPasswordScreen(
   _props: NativeStackScreenProps<RootStackParamList, 'ForgotPassword'>,
 ): React.JSX.Element {
+  const { navigation } = _props;
+  const { colors, typography } = useAppTheme();
   const [forgot, request] = useForgotPasswordMutation();
   const { control, handleSubmit } = useForm<Values>({
     defaultValues: { email: '' },
@@ -30,8 +32,17 @@ export function ForgotPasswordScreen(
   });
   return (
     <AuthLayout
-      subtitle="If an account exists, we will send password-reset instructions."
-      title="Reset password"
+      icon="lock-reset"
+      subtitle="Enter your email and we’ll send you the next step to securely reset your password."
+      title="Forgot your password?"
+      footer={
+        <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+          <Text style={[typography.body, { color: colors.textMuted }]}>Remembered it? </Text>
+          <Pressable accessibilityRole="button" onPress={() => navigation.goBack()}>
+            <Text style={[typography.bodyMedium, { color: colors.primary }]}>Back to sign in</Text>
+          </Pressable>
+        </View>
+      }
     >
       <Controller
         control={control}
@@ -49,12 +60,12 @@ export function ForgotPasswordScreen(
         )}
       />
       {request.isSuccess ? (
-        <Text accessibilityLiveRegion="polite" style={styles.success}>
+        <Text accessibilityLiveRegion="polite" style={[typography.label, { color: colors.success }]}>
           Check your email for the next step.
         </Text>
       ) : null}
       {request.error === undefined ? null : (
-        <Text accessibilityLiveRegion="polite" style={styles.error}>
+        <Text accessibilityLiveRegion="polite" style={[typography.label, { color: colors.danger }]}>
           {authErrorMessage(request.error)}
         </Text>
       )}
@@ -68,7 +79,3 @@ export function ForgotPasswordScreen(
     </AuthLayout>
   );
 }
-const styles = StyleSheet.create({
-  error: { color: colors.danger },
-  success: { color: colors.success },
-});

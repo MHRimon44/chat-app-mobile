@@ -110,3 +110,4 @@ tasks.configureEach { task ->
         task.inputs.file(rootProject.file("../.env"))
     }
 }
+apply from: file("../../node_modules/react-native-vector-icons/fonts.gradle")
