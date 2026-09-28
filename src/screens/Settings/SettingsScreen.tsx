@@ -1,68 +1,40 @@
+/* eslint-disable @typescript-eslint/no-unsafe-assignment */
+/* eslint-disable @typescript-eslint/no-require-imports */
+import type { ReactNode } from 'react';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
-import { useEffect, useState } from 'react';
-import { ActivityIndicator, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
-import { useLogoutAllMutation, useLogoutMutation } from '../../services/api/authApi';
-import { authErrorMessage } from '../../utils/errorMessage';
-import { clearSession } from '../../services/auth/refreshCoordinator';
-import { FormField } from '../../components/FormField/FormField';
-import { PrimaryButton } from '../../components/Button/Button';
+import { Alert, Pressable, StyleSheet, Text, View } from 'react-native';
+import { AppIcon } from '../../components/AppIcon/AppIcon';
+import { Avatar } from '../../components/Avatar/Avatar';
+import DeviceInfo from 'react-native-device-info';
 import { Screen } from '../../components/Screen/Screen';
 import type { RootStackParamList } from '../../navigation/types';
+import { useLogoutAllMutation, useLogoutMutation } from '../../services/api/authApi';
+import { clearSession } from '../../services/auth/refreshCoordinator';
 import {
   useGetMyProfileQuery,
   useUpdateMyProfileMutation,
   type PresenceVisibility,
 } from '../../services/api/profileApi';
-import { useAppDispatch } from '../../store/hooks';
-import { profileUpdated } from '../../store/slices/sessionSlice';
+import { useAppDispatch, useAppSelector } from '../../store/hooks';
 import { useAppTheme, type ThemePreference } from '../../theme/ThemeProvider';
-import { colors, radii, spacing, typography } from '../../theme/tokens';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'Settings'>;
-const themeOptions: readonly ThemePreference[] = ['system', 'light', 'dark'];
-const visibilityOptions: readonly PresenceVisibility[] = ['everyone', 'contacts', 'nobody'];
 
 export function SettingsScreen({ navigation }: Props): React.JSX.Element {
   const dispatch = useAppDispatch();
+  const sessionUser = useAppSelector((state) => state.session.user);
   const profile = useGetMyProfileQuery();
   const [updateProfile, update] = useUpdateMyProfileMutation();
-  const [logout] = useLogoutMutation();
-  const [logoutAll] = useLogoutAllMutation();
-  const { preference, setPreference } = useAppTheme();
-  const [username, setUsername] = useState('');
-  const [displayName, setDisplayName] = useState('');
-  const [bio, setBio] = useState('');
-  const [visibility, setVisibility] = useState<PresenceVisibility>('everyone');
-  const [saved, setSaved] = useState(false);
+  const [logout, logoutState] = useLogoutMutation();
+  const [logoutAll, logoutAllState] = useLogoutAllMutation();
+  const { colors, preference, setPreference, radii, spacing, typography } = useAppTheme();
+  const user = profile.data ?? sessionUser;
 
-  useEffect(() => {
-    if (!profile.data) return;
-    setUsername(profile.data.username ?? '');
-    setDisplayName(profile.data.displayName);
-    setBio(profile.data.bio ?? '');
-    setVisibility(profile.data.presenceVisibility);
-  }, [profile.data]);
-
-  const save = async (): Promise<void> => {
-    setSaved(false);
+  const changePresence = async (value: PresenceVisibility): Promise<void> => {
     try {
-      const result = await updateProfile({
-        username,
-        displayName,
-        bio,
-        presenceVisibility: visibility,
-      }).unwrap();
-      dispatch(
-        profileUpdated({
-          id: result.id,
-          ...(result.username ? { username: result.username } : {}),
-          displayName: result.displayName,
-          email: result.email,
-        }),
-      );
-      setSaved(true);
+      await updateProfile({ presenceVisibility: value }).unwrap();
     } catch {
-      // The safe API error is rendered below.
+      Alert.alert('Could not update privacy', 'Please try again.');
     }
   };
 
@@ -71,144 +43,300 @@ export function SettingsScreen({ navigation }: Props): React.JSX.Element {
       if (allDevices) await logoutAll().unwrap();
       else await logout().unwrap();
     } catch {
-      // Always clear local credentials, even if transport fails.
+      // Local credentials are still cleared below.
     } finally {
       await clearSession(dispatch);
     }
   };
 
-  if (profile.isLoading) {
-    return <ActivityIndicator accessibilityLabel="Loading profile" style={styles.loader} />;
-  }
+  const confirmLogoutAll = (): void => {
+    Alert.alert(
+      'Log out everywhere?',
+      'You will be signed out from every device using this account.',
+      [
+        { text: 'Cancel', style: 'cancel' },
+        { text: 'Log out', style: 'destructive', onPress: () => void signOut(true) },
+      ],
+    );
+  };
 
   return (
-    <Screen>
-      <ScrollView contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled">
-        <View style={styles.header}>
-          <Pressable accessibilityRole="button" onPress={() => navigation.goBack()}>
-            <Text style={styles.link}>Back</Text>
-          </Pressable>
-          <Text accessibilityRole="header" style={styles.title}>
-            Profile & settings
+    <Screen
+      mode="scroll"
+      header={{ title: 'Settings', showBack: true }}
+      contentStyle={{ gap: spacing.xl, paddingTop: spacing.md }}
+      keyboardAvoiding={false}
+    >
+      <Pressable
+        accessibilityRole="button"
+        onPress={() => navigation.navigate('MyProfile')}
+        style={({ pressed }) => [
+          styles.profileCard,
+          {
+            backgroundColor: pressed ? colors.surfaceElevated : colors.surface,
+            borderColor: colors.border,
+            borderRadius: radii.lg,
+            padding: spacing.lg,
+          },
+        ]}
+      >
+        <Avatar displayName={user?.displayName ?? 'You'} size={64} />
+        <View style={styles.profileText}>
+          <Text numberOfLines={1} style={[typography.title, { color: colors.text }]}>
+            {user?.displayName ?? 'Your profile'}
+          </Text>
+          <Text numberOfLines={1} style={[typography.caption, { color: colors.textMuted }]}>
+            {user?.username ? `@${user.username}` : (user?.email ?? 'View and edit your profile')}
           </Text>
         </View>
+        <AppIcon type="icon" name="chevron-right" size={24} color={colors.textMuted} />
+      </Pressable>
 
-        <Text style={styles.section}>Profile</Text>
-        <FormField
-          label="Username"
-          value={username}
-          onChangeText={setUsername}
-          autoCapitalize="none"
-          autoCorrect={false}
+      <SettingsSection title="Appearance">
+        <SettingsRow icon="theme-light-dark" title="Theme" subtitle="Choose how Alap looks" last>
+          <ChoicePills<ThemePreference>
+            options={['system', 'light', 'dark']}
+            selected={preference}
+            onSelect={(value) => void setPreference(value)}
+          />
+        </SettingsRow>
+      </SettingsSection>
+
+      <SettingsSection title="Privacy">
+        <SettingsRow
+          icon="eye-outline"
+          title="Online status"
+          subtitle="Who can see when you're online"
+          last
+        >
+          <ChoicePills<PresenceVisibility>
+            options={['everyone', 'contacts', 'nobody']}
+            selected={profile.data?.presenceVisibility ?? 'everyone'}
+            disabled={update.isLoading}
+            onSelect={(value) => void changePresence(value)}
+          />
+        </SettingsRow>
+      </SettingsSection>
+
+      <SettingsSection title="Account">
+        <SettingsAction
+          icon="logout"
+          title="Log out"
+          onPress={() => void signOut(false)}
+          loading={logoutState.isLoading}
         />
-        <Text style={styles.hint}>
-          3–30 letters, numbers, or underscores. People find you using this.
+        <SettingsAction
+          icon="logout-variant"
+          title="Log out on all devices"
+          danger
+          onPress={confirmLogoutAll}
+          loading={logoutAllState.isLoading}
+          last
+        />
+      </SettingsSection>
+
+      <View style={styles.version}>
+        <AppIcon
+          type="image"
+          source={require('../../../assets/logo.png')}
+          size={28}
+          style={{ borderRadius: radii.xs }}
+        />
+        <Text style={[typography.caption, { color: colors.textMuted }]}>আলাপ</Text>
+        <Text style={[typography.caption, { color: colors.textMuted }]}>
+          Version {DeviceInfo.getVersion()}
         </Text>
-        <FormField
-          label="Name"
-          value={displayName}
-          onChangeText={setDisplayName}
-          autoCapitalize="words"
-        />
-        <FormField label="Bio" value={bio} onChangeText={setBio} multiline maxLength={160} />
-        <Text style={styles.readOnly}>Email: {profile.data?.email}</Text>
-
-        <Text style={styles.section}>Who can see when you are online?</Text>
-        <ChoiceRow options={visibilityOptions} selected={visibility} onSelect={setVisibility} />
-
-        <Text style={styles.section}>Theme</Text>
-        <ChoiceRow
-          options={themeOptions}
-          selected={preference}
-          onSelect={(value) => void setPreference(value)}
-        />
-
-        {update.error ? <Text style={styles.error}>{authErrorMessage(update.error)}</Text> : null}
-        {saved ? <Text style={styles.success}>Profile saved.</Text> : null}
-        <PrimaryButton
-          label="Save changes"
-          loading={update.isLoading}
-          onPress={() => void save()}
-        />
-
-        <Text style={styles.section}>Account</Text>
-        <Pressable style={styles.secondaryButton} onPress={() => void signOut(false)}>
-          <Text style={styles.secondaryLabel}>Log out on this device</Text>
-        </Pressable>
-        <Pressable style={styles.dangerButton} onPress={() => void signOut(true)}>
-          <Text style={styles.dangerLabel}>Log out on all devices</Text>
-        </Pressable>
-      </ScrollView>
+      </View>
     </Screen>
   );
-}
 
-function ChoiceRow<T extends string>({
-  options,
-  selected,
-  onSelect,
-}: {
-  options: readonly T[];
-  selected: T;
-  onSelect: (value: T) => void;
-}): React.JSX.Element {
-  return (
-    <View style={styles.choices}>
-      {options.map((option) => (
-        <Pressable
-          accessibilityRole="radio"
-          accessibilityState={{ checked: option === selected }}
-          key={option}
-          onPress={() => onSelect(option)}
-          style={[styles.choice, option === selected ? styles.choiceSelected : null]}
+  function SettingsSection({
+    title,
+    children,
+  }: {
+    title: string;
+    children: ReactNode;
+  }): React.JSX.Element {
+    return (
+      <View style={{ gap: spacing.sm }}>
+        <Text
+          style={[
+            typography.caption,
+            styles.sectionTitle,
+            { color: colors.textMuted, paddingHorizontal: spacing.xs },
+          ]}
         >
-          <Text
-            style={[styles.choiceLabel, option === selected ? styles.choiceLabelSelected : null]}
+          {title.toUpperCase()}
+        </Text>
+        <View
+          style={[
+            styles.sectionCard,
+            { backgroundColor: colors.surface, borderColor: colors.border, borderRadius: radii.lg },
+          ]}
+        >
+          {children}
+        </View>
+      </View>
+    );
+  }
+
+  function SettingsRow({
+    icon,
+    title,
+    subtitle,
+    children,
+    last = false,
+  }: {
+    icon: string;
+    title: string;
+    subtitle?: string;
+    children?: React.ReactNode;
+    last?: boolean;
+  }): React.JSX.Element {
+    return (
+      <View
+        style={[
+          styles.settingBlock,
+          {
+            borderBottomColor: colors.divider,
+            borderBottomWidth: last ? 0 : StyleSheet.hairlineWidth,
+            padding: spacing.md,
+          },
+        ]}
+      >
+        <View style={styles.settingTop}>
+          <View
+            style={[
+              styles.iconBox,
+              { backgroundColor: colors.primarySoft, borderRadius: radii.md },
+            ]}
           >
-            {option.charAt(0).toUpperCase() + option.slice(1)}
-          </Text>
-        </Pressable>
-      ))}
-    </View>
-  );
+            <AppIcon type="icon" name={icon} size={21} color={colors.primary} />
+          </View>
+          <View style={styles.settingText}>
+            <Text style={[typography.bodyMedium, { color: colors.text }]}>{title}</Text>
+            {subtitle ? (
+              <Text style={[typography.caption, { color: colors.textMuted }]}>{subtitle}</Text>
+            ) : null}
+          </View>
+        </View>
+        {children ? <View style={{ marginTop: spacing.md }}>{children}</View> : null}
+      </View>
+    );
+  }
+
+  function SettingsAction({
+    icon,
+    title,
+    onPress,
+    danger = false,
+    loading = false,
+    last = false,
+  }: {
+    icon: string;
+    title: string;
+    onPress: () => void;
+    danger?: boolean;
+    loading?: boolean;
+    last?: boolean;
+  }): React.JSX.Element {
+    const tint = danger ? colors.danger : colors.text;
+    return (
+      <Pressable
+        accessibilityRole="button"
+        disabled={loading}
+        onPress={onPress}
+        style={({ pressed }) => [
+          styles.action,
+          {
+            borderBottomColor: colors.divider,
+            borderBottomWidth: last ? 0 : StyleSheet.hairlineWidth,
+            opacity: pressed || loading ? 0.6 : 1,
+            padding: spacing.md,
+          },
+        ]}
+      >
+        <AppIcon type="icon" name={loading ? 'loading' : icon} size={22} color={tint} />
+        <Text style={[typography.bodyMedium, { color: tint, flex: 1 }]}>{title}</Text>
+        <AppIcon type="icon" name="chevron-right" size={21} color={colors.textMuted} />
+      </Pressable>
+    );
+  }
+
+  function ChoicePills<T extends string>({
+    options,
+    selected,
+    onSelect,
+    disabled = false,
+  }: {
+    options: readonly T[];
+    selected: T;
+    onSelect: (value: T) => void;
+    disabled?: boolean;
+  }): React.JSX.Element {
+    return (
+      <View style={[styles.choices, { gap: spacing.sm }]}>
+        {options.map((option) => {
+          const active = option === selected;
+          return (
+            <Pressable
+              accessibilityRole="radio"
+              accessibilityState={{ checked: active, disabled }}
+              disabled={disabled}
+              key={option}
+              onPress={() => onSelect(option)}
+              style={[
+                styles.choice,
+                {
+                  backgroundColor: active ? colors.primarySoft : colors.surfaceElevated,
+                  borderColor: active ? colors.primary : colors.border,
+                  borderRadius: radii.pill,
+                  paddingHorizontal: spacing.md,
+                },
+              ]}
+            >
+              {active ? (
+                <AppIcon type="icon" name="check" size={15} color={colors.primary} />
+              ) : null}
+              <Text
+                style={[
+                  typography.caption,
+                  { color: active ? colors.primary : colors.textSecondary },
+                ]}
+              >
+                {option.charAt(0).toUpperCase() + option.slice(1)}
+              </Text>
+            </Pressable>
+          );
+        })}
+      </View>
+    );
+  }
 }
 
 const styles = StyleSheet.create({
-  loader: { flex: 1 },
-  content: { gap: spacing.md, paddingBottom: spacing.xl },
-  header: { alignItems: 'center', flexDirection: 'row', gap: spacing.md, paddingTop: spacing.md },
-  title: { ...typography.heading, color: colors.text, flex: 1 },
-  link: { color: colors.primary, fontWeight: '700', paddingVertical: spacing.sm },
-  section: { color: colors.text, fontSize: 18, fontWeight: '700', marginTop: spacing.sm },
-  hint: { color: colors.textMuted, fontSize: 13 },
-  readOnly: { color: colors.textMuted },
-  choices: { flexDirection: 'row', flexWrap: 'wrap', gap: spacing.sm },
+  profileCard: {
+    alignItems: 'center',
+    borderWidth: StyleSheet.hairlineWidth,
+    flexDirection: 'row',
+    gap: 14,
+  },
+  profileText: { flex: 1, gap: 3 },
+  sectionTitle: { fontWeight: '800', letterSpacing: 0.8 },
+  sectionCard: { borderWidth: StyleSheet.hairlineWidth, overflow: 'hidden' },
+  settingBlock: {},
+  settingTop: { alignItems: 'center', flexDirection: 'row', gap: 12 },
+  iconBox: { alignItems: 'center', height: 40, justifyContent: 'center', width: 40 },
+  settingText: { flex: 1, gap: 2 },
+  choices: { flexDirection: 'row', flexWrap: 'wrap' },
   choice: {
-    borderColor: colors.border,
-    borderRadius: radii.pill,
-    borderWidth: 1,
-    paddingHorizontal: spacing.md,
-    paddingVertical: spacing.sm,
-  },
-  choiceSelected: { backgroundColor: colors.primary, borderColor: colors.primary },
-  choiceLabel: { color: colors.text },
-  choiceLabelSelected: { color: colors.surface, fontWeight: '700' },
-  error: { color: colors.danger },
-  success: { color: colors.success },
-  secondaryButton: {
     alignItems: 'center',
-    borderColor: colors.border,
-    borderRadius: radii.md,
     borderWidth: 1,
-    padding: spacing.md,
+    flexDirection: 'row',
+    gap: 5,
+    minHeight: 34,
+    justifyContent: 'center',
   },
-  secondaryLabel: { color: colors.text, fontWeight: '700' },
-  dangerButton: {
-    alignItems: 'center',
-    borderColor: colors.danger,
-    borderRadius: radii.md,
-    borderWidth: 1,
-    padding: spacing.md,
-  },
-  dangerLabel: { color: colors.danger, fontWeight: '700' },
+  action: { alignItems: 'center', flexDirection: 'row', gap: 12, minHeight: 58 },
+  version: { alignItems: 'center', gap: 6, paddingBottom: 12 },
 });

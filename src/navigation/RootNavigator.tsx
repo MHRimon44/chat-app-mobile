@@ -7,6 +7,7 @@ import { LoginScreen } from '../screens/Auth/Login/LoginScreen';
 import { RegisterScreen } from '../screens/Auth/Register/RegisterScreen';
 import { ResetPasswordScreen } from '../screens/Auth/ResetPassword/ResetPasswordScreen';
 import { UserProfileScreen } from '../screens/Profile/UserProfileScreen';
+import { MyProfileScreen } from '../screens/Profile/MyProfileScreen';
 import { UserSearchScreen } from '../screens/Search/UserSearchScreen';
 import { WelcomeScreen } from '../screens/Welcome/WelcomeScreen';
 import { SettingsScreen } from '../screens/Settings/SettingsScreen';
@@ -23,6 +24,7 @@ export function RootNavigator(): React.JSX.Element {
         <Stack.Group>
           <Stack.Screen name="ConversationList" component={ConversationListScreen} />
           <Stack.Screen name="Settings" component={SettingsScreen} />
+          <Stack.Screen name="MyProfile" component={MyProfileScreen} />
           <Stack.Screen name="UserSearch" component={UserSearchScreen} />
           <Stack.Screen name="UserProfile" component={UserProfileScreen} />
           <Stack.Screen name="Chat" component={ChatScreen} />

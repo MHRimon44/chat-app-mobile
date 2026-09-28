@@ -14,7 +14,6 @@ import {
 import type { Conversation } from '../../@types/chat';
 import type { Message } from '../../@types/message';
 import { AppIcon } from '../../components/AppIcon/AppIcon';
-import { Avatar } from '../../components/Avatar/Avatar';
 import { ConversationRow } from '../../components/ConversationRow/ConversationRow';
 import { Screen } from '../../components/Screen/Screen';
 import type { RootStackParamList } from '../../navigation/types';
@@ -189,13 +188,13 @@ export function ConversationListScreen({ navigation }: Props): React.JSX.Element
     <Screen padded={false} keyboardAvoiding={false}>
       <View style={[styles.header, { paddingHorizontal: spacing.xl, paddingTop: spacing.sm }]}>
         <View style={styles.brandRow}>
-          <View
-            style={[
-              styles.brandIcon,
-              { backgroundColor: colors.primarySoft, borderRadius: radii.lg },
-            ]}
-          >
-            <AppIcon type="image" source={require('../../../assets/logo.png')} size={32} />
+          <View>
+            <AppIcon
+              type="image"
+              source={require('../../../assets/logo.png')}
+              size={32}
+              style={{ borderRadius: radii.xs }}
+            />
           </View>
           <Text accessibilityRole="header" style={[typography.heading, { color: colors.text }]}>
             আলাপ
@@ -208,14 +207,11 @@ export function ConversationListScreen({ navigation }: Props): React.JSX.Element
             icon="magnify"
             onPress={() => navigation.navigate('UserSearch')}
           />
-          <Pressable
-            accessibilityLabel="Profile and settings"
-            accessibilityRole="button"
-            hitSlop={8}
+          <IconButton
+            accessibilityLabel="Settings"
+            icon="cog-outline"
             onPress={() => navigation.navigate('Settings')}
-          >
-            <Avatar displayName={user?.displayName ?? 'You'} size={38} />
-          </Pressable>
+          />
         </View>
       </View>
 
