@@ -35,7 +35,7 @@ export function ResetPasswordScreen({ navigation, route }: Props): React.JSX.Ele
   return (
     <AuthLayout
       icon="shield-lock-outline"
-      subtitle="Choose a strong new password to keep your Alap account secure."
+      subtitle="Choose a strong new password to keep your আলাপ account secure."
       title="Set a new password"
     >
       <Controller

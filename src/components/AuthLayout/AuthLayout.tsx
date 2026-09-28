@@ -27,7 +27,9 @@ export function AuthLayout({
       <View pointerEvents="none" style={[styles.glowTop, { backgroundColor: colors.cyan }]} />
       <View pointerEvents="none" style={[styles.glowBottom, { backgroundColor: colors.accent }]} />
 
-      <View style={[styles.content, { paddingHorizontal: spacing.xl, paddingVertical: spacing.xxl }]}>
+      <View
+        style={[styles.content, { paddingHorizontal: spacing.xl, paddingVertical: spacing.xxl }]}
+      >
         <View style={styles.hero}>
           <View
             style={[
@@ -38,11 +40,18 @@ export function AuthLayout({
             <AppIcon type="icon" name={icon} size={28} color={colors.primary} />
           </View>
 
-          <Text style={[typography.label, styles.eyebrow, { color: colors.primary }]}>{eyebrow}</Text>
-          <Text accessibilityRole="header" style={[typography.heading, styles.title, { color: colors.text }]}>
+          <Text style={[typography.label, styles.eyebrow, { color: colors.primary }]}>
+            {eyebrow}
+          </Text>
+          <Text
+            accessibilityRole="header"
+            style={[typography.heading, styles.title, { color: colors.text }]}
+          >
             {title}
           </Text>
-          <Text style={[typography.body, styles.subtitle, { color: colors.textMuted }]}>{subtitle}</Text>
+          <Text style={[typography.body, styles.subtitle, { color: colors.textMuted }]}>
+            {subtitle}
+          </Text>
         </View>
 
         <View

@@ -43,7 +43,7 @@ export function LoginScreen({ navigation }: Props): React.JSX.Element {
       title="Welcome back"
       footer={
         <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-          <Text style={[typography.body, { color: colors.textMuted }]}>New to Alap? </Text>
+          <Text style={[typography.body, { color: colors.textMuted }]}>New to আলাপ? </Text>
           <Pressable accessibilityRole="button" onPress={() => navigation.navigate('Register')}>
             <Text style={[typography.bodyMedium, { color: colors.primary }]}>Create account</Text>
           </Pressable>

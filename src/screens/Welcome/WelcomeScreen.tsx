@@ -37,7 +37,7 @@ export function WelcomeScreen({ navigation }: Props): React.JSX.Element {
           </View>
 
           <Text accessibilityRole="header" style={[styles.name, { color: colors.text }]}>
-            Alap
+            আলাপ
           </Text>
           <Text style={[styles.tagline, { color: colors.text }]}>
             Conversations that feel closer.
