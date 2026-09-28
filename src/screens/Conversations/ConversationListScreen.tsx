@@ -42,9 +42,14 @@ export function ConversationListScreen({ navigation }: Props): React.JSX.Element
   const [initialLoading, setInitialLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [loadingMore, setLoadingMore] = useState(false);
+  const [openConversationId, setOpenConversationId] = useState<string | null>(null);
   const [load, request] = useLazyListConversationsQuery();
   const [loadLatestMessage] = useLazyMessageHistoryQuery();
   const [hide] = useHideConversationMutation();
+
+  const closeSwipeAction = useCallback((): void => {
+    setOpenConversationId(null);
+  }, []);
 
   const visibleItems = useMemo(
     () => (filter === 'unread' ? items.filter((item) => item.unreadCount > 0) : items),
@@ -151,6 +156,7 @@ export function ConversationListScreen({ navigation }: Props): React.JSX.Element
   );
 
   const hideConversation = (conversation: Conversation): void => {
+    closeSwipeAction();
     void hide(conversation.id)
       .unwrap()
       .then(() =>
@@ -160,6 +166,7 @@ export function ConversationListScreen({ navigation }: Props): React.JSX.Element
   };
 
   const openConversation = (item: Conversation): void => {
+    closeSwipeAction();
     setItems((current) =>
       current.map((conversation) =>
         conversation.id === item.id ? { ...conversation, unreadCount: 0 } : conversation,
@@ -174,26 +181,38 @@ export function ConversationListScreen({ navigation }: Props): React.JSX.Element
 
   return (
     <Screen padded={false} keyboardAvoiding={false}>
-      <View style={[styles.header, { paddingHorizontal: spacing.xl, paddingTop: spacing.sm }]}>
+      <View
+        onTouchStart={closeSwipeAction}
+        style={[styles.header, { paddingHorizontal: spacing.xl, paddingTop: spacing.sm }]}
+      >
         <AppBrand size={32} />
 
         <View style={styles.headerActions}>
           <IconButton
             accessibilityLabel="Search people"
             icon="magnify"
-            onPress={() => navigation.navigate('UserSearch')}
+            onPress={() => {
+              closeSwipeAction();
+              navigation.navigate('UserSearch');
+            }}
           />
           <IconButton
             accessibilityLabel="Settings"
             icon="cog-outline"
-            onPress={() => navigation.navigate('Settings')}
+            onPress={() => {
+              closeSwipeAction();
+              navigation.navigate('Settings');
+            }}
           />
         </View>
       </View>
 
       <Pressable
         accessibilityRole="button"
-        onPress={() => navigation.navigate('UserSearch')}
+        onPress={() => {
+          closeSwipeAction();
+          navigation.navigate('UserSearch');
+        }}
         style={[
           styles.search,
           {
@@ -210,16 +229,27 @@ export function ConversationListScreen({ navigation }: Props): React.JSX.Element
       </Pressable>
 
       <View
+        onTouchStart={closeSwipeAction}
         style={[
           styles.filters,
           { gap: spacing.sm, paddingHorizontal: spacing.xl, marginTop: spacing.lg },
         ]}
       >
-        <FilterChip label="All" selected={filter === 'all'} onPress={() => setFilter('all')} />
+        <FilterChip
+          label="All"
+          selected={filter === 'all'}
+          onPress={() => {
+            closeSwipeAction();
+            setFilter('all');
+          }}
+        />
         <FilterChip
           label={unreadTotal > 0 ? `Unread ${unreadTotal > 99 ? '99+' : unreadTotal}` : 'Unread'}
           selected={filter === 'unread'}
-          onPress={() => setFilter('unread')}
+          onPress={() => {
+            closeSwipeAction();
+            setFilter('unread');
+          }}
         />
       </View>
 
@@ -231,17 +261,27 @@ export function ConversationListScreen({ navigation }: Props): React.JSX.Element
         ]}
         data={visibleItems}
         keyExtractor={(item) => item.id}
+        onScrollBeginDrag={closeSwipeAction}
+        onTouchStart={() => {
+          if (openConversationId !== null) closeSwipeAction();
+        }}
         onEndReached={() => {
           if (hasMore && !loadingMore) void loadMore();
         }}
         onEndReachedThreshold={0.4}
-        onRefresh={() => void pullToRefresh()}
+        onRefresh={() => {
+          closeSwipeAction();
+          void pullToRefresh();
+        }}
         refreshing={refreshing}
         renderItem={({ item }) => (
           <ConversationRow
             conversation={item}
             latestMessage={latestMessages[item.id]}
             actorId={user?.id}
+            isOpen={openConversationId === item.id}
+            onOpen={() => setOpenConversationId(item.id)}
+            onClose={closeSwipeAction}
             onHide={() => hideConversation(item)}
             onPress={() => openConversation(item)}
           />
@@ -284,7 +324,10 @@ export function ConversationListScreen({ navigation }: Props): React.JSX.Element
       <Pressable
         accessibilityLabel="New conversation"
         accessibilityRole="button"
-        onPress={() => navigation.navigate('UserSearch')}
+        onPress={() => {
+          closeSwipeAction();
+          navigation.navigate('UserSearch');
+        }}
         style={({ pressed }) => [
           styles.fab,
           shadows.md,

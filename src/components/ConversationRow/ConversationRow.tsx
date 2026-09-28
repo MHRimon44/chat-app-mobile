@@ -1,5 +1,5 @@
 import { Animated, PanResponder, Pressable, StyleSheet, Text, View } from 'react-native';
-import { useMemo, useRef } from 'react';
+import { useEffect, useMemo, useRef } from 'react';
 import type { Conversation } from '../../@types/chat';
 import type { Message } from '../../@types/message';
 import { useAppTheme } from '../../theme/ThemeProvider';
@@ -25,12 +25,18 @@ export function ConversationRow({
   onPress,
   latestMessage,
   actorId,
+  isOpen,
+  onOpen,
+  onClose,
 }: {
   conversation: Conversation;
   onHide: () => void;
   onPress: () => void;
   latestMessage?: Message | undefined;
   actorId?: string | undefined;
+  isOpen: boolean;
+  onOpen: () => void;
+  onClose: () => void;
 }): React.JSX.Element {
   const { colors, radii, spacing, typography } = useAppTheme();
   const unread = conversation.unreadCount ?? 0;
@@ -38,29 +44,40 @@ export function ConversationRow({
   const translateX = useRef(new Animated.Value(0)).current;
   const actionWidth = 68;
 
+  useEffect(() => {
+    Animated.spring(translateX, {
+      toValue: isOpen ? -actionWidth : 0,
+      useNativeDriver: true,
+    }).start();
+  }, [isOpen, translateX]);
+
   const panResponder = useMemo(
     () =>
       PanResponder.create({
         onMoveShouldSetPanResponder: (_event, gesture) =>
           gesture.dx < -8 && Math.abs(gesture.dx) > Math.abs(gesture.dy),
+        onPanResponderGrant: () => {
+          if (!isOpen) onOpen();
+        },
         onPanResponderMove: (_event, gesture) => {
-          translateX.setValue(Math.max(-actionWidth, Math.min(0, gesture.dx)));
+          const start = isOpen ? -actionWidth : 0;
+          translateX.setValue(Math.max(-actionWidth, Math.min(0, start + gesture.dx)));
         },
         onPanResponderRelease: (_event, gesture) => {
-          Animated.spring(translateX, {
-            toValue: gesture.dx < -36 ? -actionWidth : 0,
-            useNativeDriver: true,
-          }).start();
+          const shouldOpen = isOpen ? gesture.dx < 36 : gesture.dx < -36;
+          if (shouldOpen) onOpen();
+          else onClose();
         },
         onPanResponderTerminate: () => {
-          Animated.spring(translateX, { toValue: 0, useNativeDriver: true }).start();
+          if (isOpen) onOpen();
+          else onClose();
         },
       }),
-    [translateX],
+    [isOpen, onClose, onOpen, translateX],
   );
 
   const hideConversation = (): void => {
-    Animated.spring(translateX, { toValue: 0, useNativeDriver: true }).start();
+    onClose();
     onHide();
   };
 
@@ -91,7 +108,13 @@ export function ConversationRow({
       >
         <Pressable
           accessibilityRole="button"
-          onPress={onPress}
+          onPress={() => {
+            if (isOpen) {
+              onClose();
+              return;
+            }
+            onPress();
+          }}
           style={({ pressed }) => [
             styles.row,
             { paddingVertical: spacing.sm },
