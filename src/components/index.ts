@@ -16,3 +16,5 @@ export { SettingsRow } from './Settings/SettingsRow';
 export { SettingsAction } from './Settings/SettingsAction';
 export { ChoicePills } from './Settings/ChoicePills';
 export { ProfileSettingsCard } from './Settings/ProfileSettingsCard';
+export { ChatHeader } from './ChatHeader/ChatHeader';
+export { SearchBar } from './SearchBar/SearchBar';

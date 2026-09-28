@@ -10,6 +10,7 @@ import {
   View,
 } from 'react-native';
 import { v4 as uuid } from 'uuid';
+import { ChatHeader } from '../../components/ChatHeader/ChatHeader';
 import { MessageBubble } from '../../components/MessageBubble/MessageBubble';
 import { MessageComposer } from '../../components/MessageComposer/MessageComposer';
 import { Screen } from '../../components/Screen/Screen';
@@ -38,16 +39,19 @@ import type {
   TypingChange,
 } from '../../@types/message';
 import type { RootStackParamList } from '../../navigation/types';
+import { useGetUserQuery } from '../../services/api/chatApi';
 import { socketManager, type ConnectionStatus } from '../../services/realtime/socketManager';
 import { useAppDispatch, useAppSelector } from '../../store/hooks';
-import { colors, spacing, typography } from '../../theme/tokens';
+import { useAppTheme } from '../../theme/ThemeProvider';
 
 const reactionOptions = ['👍', '❤️', '😂', '😮', '😢', '🙏'] as const;
 type Props = NativeStackScreenProps<RootStackParamList, 'Chat'>;
 
-export function ChatScreen({ route }: Props): React.JSX.Element {
+export function ChatScreen({ navigation, route }: Props): React.JSX.Element {
   const { conversationId, counterpartId, title } = route.params;
   const dispatch = useAppDispatch();
+  const { colors, radii, spacing, typography } = useAppTheme();
+  const counterpart = useGetUserQuery(counterpartId);
   const actorId = useAppSelector((state) => state.session.user?.id);
   const messages = useAppSelector((state) => selectConversationMessages(state, conversationId));
   const [replyTo, setReplyTo] = useState<Message | null>(null);
@@ -59,6 +63,7 @@ export function ChatScreen({ route }: Props): React.JSX.Element {
   const [counterpartPresence, setCounterpartPresence] = useState<'online' | 'offline' | 'unknown'>(
     'unknown',
   );
+  const [counterpartLastSeenAt, setCounterpartLastSeenAt] = useState<string | undefined>();
   const [counterpartTyping, setCounterpartTyping] = useState(false);
   const [counterpartReceipt, setCounterpartReceipt] = useState<ReceiptChange | null>(null);
   const [loadHistory, history] = useLazyMessageHistoryQuery();
@@ -147,7 +152,10 @@ export function ChatScreen({ route }: Props): React.JSX.Element {
           );
       }),
       socketManager.on<PresenceChange>('presence:changed', (presence) => {
-        if (presence.userId === counterpartId) setCounterpartPresence(presence.status);
+        if (presence.userId === counterpartId) {
+          setCounterpartPresence(presence.status);
+          if (presence.lastSeenAt !== undefined) setCounterpartLastSeenAt(presence.lastSeenAt);
+        }
       }),
       socketManager.on<ReceiptChange>('receipt:changed', (receipt) => {
         if (receipt.conversationId === conversationId && receipt.userId === counterpartId)
@@ -259,31 +267,25 @@ export function ChatScreen({ route }: Props): React.JSX.Element {
   const menu = (message: Message): void => setActionMessage(message);
 
   return (
-    <Screen>
-      <View style={styles.header}>
-        <Text accessibilityRole="header" style={styles.title}>
-          {title}
-        </Text>
-        <Text
-          accessibilityLiveRegion="polite"
-          style={[styles.connection, connection === 'connected' ? styles.online : styles.offline]}
-        >
-          {connection === 'connected'
-            ? counterpartTyping
-              ? 'Typing…'
-              : counterpartPresence === 'online'
-                ? 'Online'
-                : counterpartPresence === 'offline'
-                  ? 'Offline'
-                  : 'Connected'
-            : connection === 'connecting'
-              ? 'Connecting…'
-              : 'Offline — sends will retry with REST'}
-        </Text>
-      </View>
+    <Screen
+      padded={false}
+      keyboardAvoiding
+      header={false}
+    >
+      <ChatHeader
+        avatarUrl={counterpart.data?.avatarUrl}
+        connected={connection === 'connected'}
+        lastSeenAt={counterpartLastSeenAt}
+        onBackPress={() => navigation.goBack()}
+        onProfilePress={() => navigation.navigate('UserProfile', { userId: counterpartId })}
+        presence={counterpartPresence}
+        title={counterpart.data?.displayName ?? title}
+        typing={counterpartTyping}
+      />
+      <View style={[styles.messages, { paddingHorizontal: spacing.md }]}>
       {actionError === null ? null : (
         <Pressable accessibilityRole="button" onPress={() => setActionError(null)}>
-          <Text accessibilityLiveRegion="polite" style={styles.error}>
+          <Text accessibilityLiveRegion="polite" style={[styles.error, { color: colors.danger }]}>
             {actionError} Tap to dismiss.
           </Text>
         </Pressable>
@@ -318,24 +320,25 @@ export function ChatScreen({ route }: Props): React.JSX.Element {
           history.isFetching ? (
             <ActivityIndicator accessibilityLabel="Loading messages" />
           ) : history.isError ? (
-            <Text style={styles.error}>Could not load messages.</Text>
+            <Text style={[styles.error, { color: colors.danger }]}>Could not load messages.</Text>
           ) : (
-            <Text style={styles.empty}>No messages yet. Say hello.</Text>
+            <Text style={[styles.empty, { color: colors.textMuted }]}>No messages yet. Say hello.</Text>
           )
         }
         ListFooterComponent={
           history.isFetching && messages.length > 0 ? <ActivityIndicator /> : undefined
         }
       />
+      </View>
       <Modal
         animationType="fade"
         onRequestClose={() => setActionMessage(null)}
         transparent
         visible={actionMessage !== null}
       >
-        <Pressable style={styles.backdrop} onPress={() => setActionMessage(null)}>
-          <View style={styles.sheet}>
-            <Text accessibilityRole="header" style={styles.sheetTitle}>
+        <Pressable style={[styles.backdrop, { backgroundColor: colors.overlay }]} onPress={() => setActionMessage(null)}>
+          <View style={[styles.sheet, { backgroundColor: colors.surface, borderTopLeftRadius: radii.lg, borderTopRightRadius: radii.lg }]}>
+            <Text accessibilityRole="header" style={[typography.title, { color: colors.text }]}>
               Message actions
             </Text>
             {actionMessage !== null && !actionMessage.id.startsWith('local:') ? (
@@ -347,7 +350,7 @@ export function ChatScreen({ route }: Props): React.JSX.Element {
                     setActionMessage(null);
                   }}
                 >
-                  <Text style={styles.sheetAction}>Reply</Text>
+                  <Text style={[typography.body, { color: colors.primary, paddingVertical: spacing.sm }]}>Reply</Text>
                 </Pressable>
                 {actionMessage.text === null ? null : (
                   <View style={styles.reactionChoices}>
@@ -378,7 +381,7 @@ export function ChatScreen({ route }: Props): React.JSX.Element {
                     setActionMessage(null);
                   }}
                 >
-                  <Text style={styles.destructive}>Delete for me</Text>
+                  <Text style={[typography.body, { color: colors.danger, paddingVertical: spacing.sm }]}>Delete for me</Text>
                 </Pressable>
                 {actionMessage.senderId === actorId ? (
                   <Pressable
@@ -388,41 +391,36 @@ export function ChatScreen({ route }: Props): React.JSX.Element {
                       setActionMessage(null);
                     }}
                   >
-                    <Text style={styles.destructive}>Delete for everyone</Text>
+                    <Text style={[typography.body, { color: colors.danger, paddingVertical: spacing.sm }]}>Delete for everyone</Text>
                   </Pressable>
                 ) : null}
               </>
             ) : (
-              <Text style={styles.empty}>Wait for this message to finish sending.</Text>
+              <Text style={[styles.empty, { color: colors.textMuted }]}>Wait for this message to finish sending.</Text>
             )}
             <Pressable accessibilityRole="button" onPress={() => setActionMessage(null)}>
-              <Text style={styles.sheetAction}>Cancel</Text>
+              <Text style={[typography.body, { color: colors.primary, paddingVertical: spacing.sm }]}>Cancel</Text>
             </Pressable>
           </View>
         </Pressable>
       </Modal>
-      <MessageComposer
+      <View style={{ paddingHorizontal: spacing.md }}>
+        <MessageComposer
         onCancelReply={() => setReplyTo(null)}
         onSend={send}
         onTyping={publishTyping}
         replyTo={replyTo}
-      />
+        />
+      </View>
     </Screen>
   );
 }
 const styles = StyleSheet.create({
-  header: { borderBottomColor: colors.border, borderBottomWidth: 1, paddingVertical: spacing.sm },
-  title: { ...typography.body, color: colors.text, fontWeight: '700', textAlign: 'center' },
-  connection: { fontSize: 12, textAlign: 'center' },
-  online: { color: colors.success },
-  offline: { color: colors.textMuted },
-  error: { color: colors.danger, padding: spacing.sm, textAlign: 'center' },
-  empty: { color: colors.textMuted, padding: spacing.xl, textAlign: 'center' },
-  backdrop: { backgroundColor: 'rgba(0,0,0,0.45)', flex: 1, justifyContent: 'flex-end' },
-  sheet: { backgroundColor: colors.surface, gap: spacing.sm, padding: spacing.lg },
-  sheetTitle: { ...typography.body, color: colors.text, fontWeight: '700' },
-  sheetAction: { color: colors.primary, fontSize: 16, paddingVertical: spacing.sm },
-  destructive: { color: colors.danger, fontSize: 16, paddingVertical: spacing.sm },
+  messages: { flex: 1 },
+  error: { padding: 8, textAlign: 'center' },
+  empty: { padding: 24, textAlign: 'center' },
+  backdrop: { flex: 1, justifyContent: 'flex-end' },
+  sheet: { gap: 8, padding: 20 },
   reactionChoices: { flexDirection: 'row', justifyContent: 'space-between' },
-  reactionChoice: { padding: spacing.sm },
+  reactionChoice: { padding: 8 },
 });

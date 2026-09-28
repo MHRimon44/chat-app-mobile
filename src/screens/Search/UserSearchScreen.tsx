@@ -1,30 +1,28 @@
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { useState } from 'react';
-import {
-  ActivityIndicator,
-  FlatList,
-  Pressable,
-  StyleSheet,
-  Text,
-  TextInput,
-  View,
-} from 'react-native';
-import { useLazySearchUsersQuery } from '../../services/api/chatApi';
-import { mergeUniqueById } from '../../utils/listHelpers';
+import { ActivityIndicator, FlatList, StyleSheet, Text, View } from 'react-native';
 import type { UserProfile } from '../../@types/chat';
+import { AppHeader } from '../../components/AppHeader/AppHeader';
+import { EmptyState } from '../../components/EmptyState/EmptyState';
 import { Screen } from '../../components/Screen/Screen';
+import { SearchBar } from '../../components/SearchBar/SearchBar';
 import { UserRow } from '../../components/UserRow/UserRow';
 import type { RootStackParamList } from '../../navigation/types';
-import { colors, radii, spacing, typography } from '../../theme/tokens';
+import { useLazySearchUsersQuery } from '../../services/api/chatApi';
+import { useAppTheme } from '../../theme/ThemeProvider';
+import { mergeUniqueById } from '../../utils/listHelpers';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'UserSearch'>;
+
 export function UserSearchScreen({ navigation }: Props): React.JSX.Element {
+  const { colors, spacing, typography } = useAppTheme();
   const [query, setQuery] = useState('');
   const [submitted, setSubmitted] = useState('');
   const [items, setItems] = useState<UserProfile[]>([]);
   const [cursor, setCursor] = useState<string | null>(null);
   const [hasMore, setHasMore] = useState(false);
   const [search, request] = useLazySearchUsersQuery();
+
   const run = async (reset: boolean): Promise<void> => {
     const normalized = reset ? query.trim() : submitted;
     if (normalized.length < 2) return;
@@ -38,50 +36,50 @@ export function UserSearchScreen({ navigation }: Props): React.JSX.Element {
       setCursor(page.page.nextCursor);
       setHasMore(page.page.hasMore);
     } catch {
-      // RTK Query exposes the safe error state to the rendered retry UI.
+      // RTK Query exposes the error state below.
     }
   };
+
+  const clear = (): void => {
+    setQuery('');
+    setSubmitted('');
+    setItems([]);
+    setCursor(null);
+    setHasMore(false);
+  };
+
   return (
-    <Screen>
-      <Text accessibilityRole="header" style={styles.title}>
-        Find people
-      </Text>
-      <View style={styles.search}>
-        <TextInput
-          accessibilityLabel="Username search"
-          autoCapitalize="none"
-          autoCorrect={false}
+    <Screen padded={false} keyboardAvoiding={false}>
+      <AppHeader title="Find people" showBack />
+
+      <View style={{ paddingHorizontal: spacing.xl, paddingTop: spacing.md }}>
+        <SearchBar
+          loading={request.isFetching}
           onChangeText={setQuery}
-          onSubmitEditing={() => {
-            void run(true);
-          }}
-          placeholder="Search by username"
-          placeholderTextColor={colors.textMuted}
-          returnKeyType="search"
-          style={styles.input}
+          onClear={clear}
+          onSubmit={() => void run(true)}
           value={query}
         />
-        <Pressable
-          accessibilityRole="button"
-          disabled={query.trim().length < 2 || request.isFetching}
-          onPress={() => {
-            void run(true);
-          }}
-          style={styles.button}
-        >
-          <Text style={styles.buttonText}>Search</Text>
-        </Pressable>
+        {query.length > 0 && query.trim().length < 2 ? (
+          <Text style={[typography.caption, { color: colors.textMuted, paddingTop: spacing.sm }]}>
+            Enter at least two characters to search.
+          </Text>
+        ) : null}
       </View>
-      {query.length > 0 && query.trim().length < 2 ? (
-        <Text style={styles.hint}>Enter at least two letters, numbers, or underscores.</Text>
-      ) : null}
+
       <FlatList
-        contentContainerStyle={items.length === 0 ? styles.emptyList : undefined}
+        contentContainerStyle={[
+          styles.list,
+          { paddingHorizontal: spacing.xl, paddingTop: spacing.lg },
+          items.length === 0 ? styles.emptyList : undefined,
+        ]}
         data={items}
+        keyboardShouldPersistTaps="handled"
         keyExtractor={(item) => item.id}
         onEndReached={() => {
           if (hasMore && !request.isFetching) void run(false);
         }}
+        onEndReachedThreshold={0.4}
         renderItem={({ item }) => (
           <UserRow
             onPress={() => navigation.navigate('UserProfile', { userId: item.id })}
@@ -90,46 +88,41 @@ export function UserSearchScreen({ navigation }: Props): React.JSX.Element {
         )}
         ListEmptyComponent={
           request.isFetching ? (
-            <ActivityIndicator accessibilityLabel="Searching users" />
+            <ActivityIndicator accessibilityLabel="Searching users" color={colors.primary} />
           ) : request.isError ? (
-            <Text style={styles.error}>Search failed. Please try again.</Text>
+            <EmptyState
+              icon="cloud-alert-outline"
+              title="Search failed"
+              message="Check your connection and try again."
+              actionIcon="refresh"
+              actionLabel="Try again"
+              onPress={() => void run(true)}
+            />
           ) : submitted.length > 0 ? (
-            <Text style={styles.empty}>No matching usernames found.</Text>
+            <EmptyState
+              icon="account-search-outline"
+              title="No people found"
+              message={`No users matched “${submitted}”. Try another username.`}
+            />
           ) : (
-            <Text style={styles.empty}>Search for an exact username prefix.</Text>
+            <EmptyState
+              icon="account-search-outline"
+              title="Find someone on Alap"
+              message="Search by username to view a profile and start a conversation."
+            />
           )
         }
         ListFooterComponent={
-          request.isFetching && items.length > 0 ? <ActivityIndicator /> : undefined
+          request.isFetching && items.length > 0 ? (
+            <ActivityIndicator color={colors.primary} style={{ paddingVertical: spacing.lg }} />
+          ) : undefined
         }
       />
     </Screen>
   );
 }
+
 const styles = StyleSheet.create({
-  title: { ...typography.heading, color: colors.text, paddingVertical: spacing.md },
-  search: { flexDirection: 'row', gap: spacing.sm },
-  input: {
-    ...typography.body,
-    backgroundColor: colors.surface,
-    borderColor: colors.border,
-    borderRadius: radii.md,
-    borderWidth: 1,
-    color: colors.text,
-    flex: 1,
-    minHeight: 50,
-    paddingHorizontal: spacing.md,
-  },
-  button: {
-    alignItems: 'center',
-    backgroundColor: colors.primary,
-    borderRadius: radii.md,
-    justifyContent: 'center',
-    paddingHorizontal: spacing.md,
-  },
-  buttonText: { color: colors.surface, fontWeight: '700' },
-  hint: { color: colors.textMuted, paddingTop: spacing.xs },
-  emptyList: { flexGrow: 1, justifyContent: 'center' },
-  empty: { color: colors.textMuted, textAlign: 'center' },
-  error: { color: colors.danger, textAlign: 'center' },
+  list: { flexGrow: 1 },
+  emptyList: { justifyContent: 'center' },
 });
