@@ -5,5 +5,5 @@ export { typography } from './typography';
 export { layout } from './layout';
 export type { ScreenMode } from './layout';
 export { shadows } from './shadows';
-// Legacy only. New components should use useAppTheme().colors so dark mode stays reactive.
-export { lightColors as colors } from './colors';
+export { AppThemeProvider, useAppTheme } from './ThemeProvider';
+export type { AppTheme, ThemePreference } from './ThemeProvider';

@@ -1,27 +1,27 @@
 import type { PropsWithChildren } from 'react';
-import { ScrollView, StyleSheet, Text } from 'react-native';
+import { Text, View } from 'react-native';
 import { Screen } from '../Screen/Screen';
-import { colors, spacing, typography } from '../../theme/tokens';
+import { useAppTheme } from '../../theme/ThemeProvider';
 
 export function AuthLayout({
   children,
   subtitle,
   title,
 }: PropsWithChildren<{ subtitle: string; title: string }>): React.JSX.Element {
+  const { colors, spacing, typography } = useAppTheme();
   return (
-    <Screen>
-      <ScrollView contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled">
-        <Text accessibilityRole="header" style={styles.title}>
+    <Screen mode="auto" keyboardAvoiding>
+      <View
+        style={{ flex: 1, gap: spacing.md, justifyContent: 'center', paddingVertical: spacing.xxl }}
+      >
+        <Text accessibilityRole="header" style={[typography.heading, { color: colors.text }]}>
           {title}
         </Text>
-        <Text style={styles.subtitle}>{subtitle}</Text>
+        <Text style={[typography.body, { color: colors.textMuted, marginBottom: spacing.sm }]}>
+          {subtitle}
+        </Text>
         {children}
-      </ScrollView>
+      </View>
     </Screen>
   );
 }
-const styles = StyleSheet.create({
-  content: { flexGrow: 1, gap: spacing.md, justifyContent: 'center', paddingVertical: spacing.xl },
-  title: { ...typography.heading, color: colors.text },
-  subtitle: { ...typography.body, color: colors.textMuted, marginBottom: spacing.sm },
-});
