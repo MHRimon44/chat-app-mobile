@@ -1,15 +1,15 @@
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { ActivityIndicator } from 'react-native';
-import { ConversationListScreen } from '../screens/ConversationListScreen';
-import { ChatScreen } from '../screens/ChatScreen';
-import { ForgotPasswordScreen } from '../screens/ForgotPasswordScreen';
-import { LoginScreen } from '../screens/LoginScreen';
-import { RegisterScreen } from '../screens/RegisterScreen';
-import { ResetPasswordScreen } from '../screens/ResetPasswordScreen';
-import { UserProfileScreen } from '../screens/UserProfileScreen';
-import { UserSearchScreen } from '../screens/UserSearchScreen';
-import { WelcomeScreen } from '../screens/WelcomeScreen';
-import { SettingsScreen } from '../screens/SettingsScreen';
+import { ConversationListScreen } from '../screens/Conversations/ConversationListScreen';
+import { ChatScreen } from '../screens/Chat/ChatScreen';
+import { ForgotPasswordScreen } from '../screens/Auth/ForgotPassword/ForgotPasswordScreen';
+import { LoginScreen } from '../screens/Auth/Login/LoginScreen';
+import { RegisterScreen } from '../screens/Auth/Register/RegisterScreen';
+import { ResetPasswordScreen } from '../screens/Auth/ResetPassword/ResetPasswordScreen';
+import { UserProfileScreen } from '../screens/Profile/UserProfileScreen';
+import { UserSearchScreen } from '../screens/Search/UserSearchScreen';
+import { WelcomeScreen } from '../screens/Welcome/WelcomeScreen';
+import { SettingsScreen } from '../screens/Settings/SettingsScreen';
 import { useAppSelector } from '../store/hooks';
 import type { RootStackParamList } from './types';
 

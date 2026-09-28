@@ -9,6 +9,7 @@ import {
   type PropsWithChildren,
 } from 'react';
 import { useColorScheme } from 'react-native';
+import { darkColors, lightColors, type AppColors } from './colors';
 
 export type ThemePreference = 'system' | 'light' | 'dark';
 const STORAGE_KEY = '@chat/theme-preference';
@@ -17,6 +18,7 @@ type ThemeContextValue = Readonly<{
   preference: ThemePreference;
   dark: boolean;
   navigationTheme: Theme;
+  colors: AppColors;
   setPreference: (preference: ThemePreference) => Promise<void>;
 }>;
 
@@ -40,6 +42,7 @@ export function AppThemeProvider({ children }: PropsWithChildren): React.JSX.Ele
       preference,
       dark,
       navigationTheme: dark ? DarkTheme : DefaultTheme,
+      colors: dark ? darkColors : lightColors,
       setPreference: async (next) => {
         await AsyncStorage.setItem(STORAGE_KEY, next);
         setPreferenceState(next);

@@ -5,7 +5,7 @@ import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { assertSecureProductionTransport, environment } from '../config/environment';
 import { RootNavigator } from '../navigation/RootNavigator';
 import { appStore } from '../store/store';
-import { bootstrapSession } from '../auth/refreshCoordinator';
+import { bootstrapSession } from '../services/auth/refreshCoordinator';
 import { AppThemeProvider, useAppTheme } from '../theme/ThemeProvider';
 assertSecureProductionTransport(environment.apiBaseUrl);
 assertSecureProductionTransport(environment.socketBaseUrl);

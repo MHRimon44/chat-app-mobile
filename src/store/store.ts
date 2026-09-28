@@ -1,8 +1,8 @@
 import { configureStore } from '@reduxjs/toolkit';
 import { api } from './api';
 import { listenerMiddleware } from './listeners';
-import { sessionReducer } from './sessionSlice';
-import { messageReducer } from '../messages/messageSlice';
+import { sessionReducer } from './slices/sessionSlice';
+import { messageReducer } from './slices/messageSlice';
 export const appStore = configureStore({
   reducer: { [api.reducerPath]: api.reducer, messages: messageReducer, session: sessionReducer },
   middleware: (getDefaultMiddleware) =>
