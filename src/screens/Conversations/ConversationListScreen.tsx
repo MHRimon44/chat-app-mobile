@@ -1,5 +1,3 @@
-/* eslint-disable @typescript-eslint/no-unsafe-assignment */
-/* eslint-disable @typescript-eslint/no-require-imports */
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import {
@@ -13,6 +11,10 @@ import {
 } from 'react-native';
 import type { Conversation } from '../../@types/chat';
 import type { Message } from '../../@types/message';
+import { AppBrand } from '../../components/AppBrand/AppBrand';
+import { EmptyState } from '../../components/EmptyState/EmptyState';
+import { FilterChip } from '../../components/FilterChip/FilterChip';
+import { IconButton } from '../../components/IconButton/IconButton';
 import { AppIcon } from '../../components/AppIcon/AppIcon';
 import { ConversationRow } from '../../components/ConversationRow/ConversationRow';
 import { Screen } from '../../components/Screen/Screen';
@@ -187,19 +189,7 @@ export function ConversationListScreen({ navigation }: Props): React.JSX.Element
   return (
     <Screen padded={false} keyboardAvoiding={false}>
       <View style={[styles.header, { paddingHorizontal: spacing.xl, paddingTop: spacing.sm }]}>
-        <View style={styles.brandRow}>
-          <View>
-            <AppIcon
-              type="image"
-              source={require('../../../assets/logo.png')}
-              size={32}
-              style={{ borderRadius: radii.xs }}
-            />
-          </View>
-          <Text accessibilityRole="header" style={[typography.heading, { color: colors.text }]}>
-            আলাপ
-          </Text>
-        </View>
+        <AppBrand size={32} />
 
         <View style={styles.headerActions}>
           <IconButton
@@ -322,146 +312,16 @@ export function ConversationListScreen({ navigation }: Props): React.JSX.Element
       </Pressable>
     </Screen>
   );
-
-  function IconButton({
-    icon,
-    accessibilityLabel,
-    onPress,
-  }: {
-    icon: string;
-    accessibilityLabel: string;
-    onPress: () => void;
-  }): React.JSX.Element {
-    return (
-      <Pressable
-        accessibilityLabel={accessibilityLabel}
-        accessibilityRole="button"
-        hitSlop={8}
-        onPress={onPress}
-        style={({ pressed }) => [
-          styles.iconButton,
-          {
-            backgroundColor: pressed ? colors.primarySoft : colors.surfaceElevated,
-            borderRadius: radii.pill,
-          },
-        ]}
-      >
-        <AppIcon type="icon" name={icon} size={22} color={colors.icon} />
-      </Pressable>
-    );
-  }
-
-  function FilterChip({
-    label,
-    selected,
-    onPress,
-  }: {
-    label: string;
-    selected: boolean;
-    onPress: () => void;
-  }): React.JSX.Element {
-    return (
-      <Pressable
-        accessibilityRole="button"
-        accessibilityState={{ selected }}
-        onPress={onPress}
-        style={[
-          styles.chip,
-          {
-            backgroundColor: selected ? colors.primarySoft : colors.surfaceElevated,
-            borderColor: selected ? colors.primary : colors.border,
-            borderRadius: radii.pill,
-            paddingHorizontal: spacing.md,
-          },
-        ]}
-      >
-        <Text
-          style={[typography.label, { color: selected ? colors.primary : colors.textSecondary }]}
-        >
-          {label}
-        </Text>
-      </Pressable>
-    );
-  }
-
-  function EmptyState({
-    icon,
-    title,
-    message,
-    actionIcon,
-    actionLabel,
-    onPress,
-  }: {
-    icon: string;
-    title: string;
-    message: string;
-    actionIcon?: string;
-    actionLabel?: string;
-    onPress?: () => void;
-  }): React.JSX.Element {
-    return (
-      <View style={[styles.empty, { gap: spacing.sm }]}>
-        <View
-          style={[
-            styles.emptyIcon,
-            { backgroundColor: colors.primarySoft, borderRadius: radii.pill },
-          ]}
-        >
-          <AppIcon type="icon" name={icon} size={32} color={colors.primary} />
-        </View>
-        <Text style={[typography.title, { color: colors.text, textAlign: 'center' }]}>{title}</Text>
-        <Text style={[typography.label, { color: colors.textMuted, textAlign: 'center' }]}>
-          {message}
-        </Text>
-        {onPress && actionLabel && actionIcon ? (
-          <Pressable
-            accessibilityRole="button"
-            onPress={onPress}
-            style={[
-              styles.emptyAction,
-              {
-                backgroundColor: colors.primarySoft,
-                borderRadius: radii.pill,
-                marginTop: spacing.sm,
-              },
-            ]}
-          >
-            <AppIcon type="icon" name={actionIcon} size={19} color={colors.primary} />
-            <Text style={[typography.label, { color: colors.primary }]}>{actionLabel}</Text>
-          </Pressable>
-        ) : null}
-      </View>
-    );
-  }
 }
 
 const styles = StyleSheet.create({
   header: { alignItems: 'center', flexDirection: 'row', justifyContent: 'space-between' },
-  brandRow: { alignItems: 'center', flexDirection: 'row', gap: 10 },
-  brandIcon: { alignItems: 'center', height: 42, justifyContent: 'center', width: 42 },
   headerActions: { alignItems: 'center', flexDirection: 'row', gap: 10 },
-  iconButton: { alignItems: 'center', height: 40, justifyContent: 'center', width: 40 },
   search: { alignItems: 'center', flexDirection: 'row', gap: 10, height: 46 },
   filters: { flexDirection: 'row' },
-  chip: { alignItems: 'center', borderWidth: 1, height: 36, justifyContent: 'center' },
   listContent: { paddingTop: 10 },
   emptyList: { flexGrow: 1 },
   separator: { height: StyleSheet.hairlineWidth, marginLeft: 70 },
-  empty: { alignItems: 'center', flex: 1, justifyContent: 'center', paddingHorizontal: 28 },
-  emptyIcon: {
-    alignItems: 'center',
-    height: 68,
-    justifyContent: 'center',
-    marginBottom: 6,
-    width: 68,
-  },
-  emptyAction: {
-    alignItems: 'center',
-    flexDirection: 'row',
-    gap: 8,
-    minHeight: 42,
-    paddingHorizontal: 16,
-  },
   fab: {
     alignItems: 'center',
     bottom: 22,

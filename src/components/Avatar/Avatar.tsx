@@ -9,7 +9,12 @@ type Props = {
   online?: boolean;
 };
 
-export function Avatar({ displayName, imageUrl, size = 48, online = false }: Props): React.JSX.Element {
+export function Avatar({
+  displayName,
+  imageUrl,
+  size = 48,
+  online = false,
+}: Props): React.JSX.Element {
   const { colors, radii } = useAppTheme();
   const avatarStyle = {
     width: size,
@@ -21,10 +26,16 @@ export function Avatar({ displayName, imageUrl, size = 48, online = false }: Pro
   return (
     <View style={[styles.wrapper, { width: size, height: size }]}>
       {imageUrl ? (
-        <Image accessibilityLabel={`${displayName} avatar`} source={{ uri: imageUrl }} style={avatarStyle} />
+        <Image
+          accessibilityLabel={`${displayName} avatar`}
+          source={{ uri: imageUrl }}
+          style={avatarStyle}
+        />
       ) : (
         <View accessibilityLabel={`${displayName} avatar`} style={[styles.avatar, avatarStyle]}>
-          <Text style={[styles.text, { color: colors.primary, fontSize: Math.max(13, size * 0.34) }]}>
+          <Text
+            style={[styles.text, { color: colors.primary, fontSize: Math.max(13, size * 0.34) }]}
+          >
             {initials(displayName)}
           </Text>
         </View>

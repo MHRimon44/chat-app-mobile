@@ -60,7 +60,10 @@ export function ForgotPasswordScreen(
         )}
       />
       {request.isSuccess ? (
-        <Text accessibilityLiveRegion="polite" style={[typography.label, { color: colors.success }]}>
+        <Text
+          accessibilityLiveRegion="polite"
+          style={[typography.label, { color: colors.success }]}
+        >
           Check your email for the next step.
         </Text>
       ) : null}

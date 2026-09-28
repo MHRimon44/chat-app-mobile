@@ -117,11 +117,7 @@ export function Screen({
         style,
       ]}
     >
-      <StatusBar
-        animated
-
-        barStyle={dark ? 'light-content' : 'dark-content'}
-      />
+      <StatusBar animated barStyle={dark ? 'light-content' : 'dark-content'} />
 
       {safeArea ? (
         <SafeAreaView edges={resolvedEdges} style={styles.safeArea}>
