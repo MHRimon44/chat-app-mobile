@@ -7,6 +7,8 @@ import { RootNavigator } from '../navigation/RootNavigator';
 import { appStore } from '../store/store';
 import { bootstrapSession } from '../services/auth/refreshCoordinator';
 import { AppThemeProvider, useAppTheme } from '../theme/ThemeProvider';
+import { NetworkIndicator } from '../components/NetworkIndicator/NetworkIndicator';
+import { ToastProvider } from '../components/Toast/ToastProvider';
 assertSecureProductionTransport(environment.apiBaseUrl);
 assertSecureProductionTransport(environment.socketBaseUrl);
 export function AppRoot(): React.JSX.Element {
@@ -17,7 +19,10 @@ export function AppRoot(): React.JSX.Element {
     <Provider store={appStore}>
       <SafeAreaProvider>
         <AppThemeProvider>
-          <ThemedNavigation />
+          <ToastProvider>
+            <ThemedNavigation />
+            <NetworkIndicator />
+          </ToastProvider>
         </AppThemeProvider>
       </SafeAreaProvider>
     </Provider>

@@ -3,8 +3,6 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import {
   ActivityIndicator,
   FlatList,
-  Modal,
-  Pressable,
   StyleSheet,
   Text,
   View,
@@ -13,6 +11,8 @@ import { v4 as uuid } from 'uuid';
 import { ChatHeader } from '../../components/ChatHeader/ChatHeader';
 import { MessageBubble } from '../../components/MessageBubble/MessageBubble';
 import { MessageComposer } from '../../components/MessageComposer/MessageComposer';
+import { MessageActionsModal } from '../../components/MessageActionsModal/MessageActionsModal';
+import { useToast } from '../../components/Toast/ToastProvider';
 import { Screen } from '../../components/Screen/Screen';
 import {
   useDeleteMessageForEveryoneMutation,
@@ -44,13 +44,13 @@ import { socketManager, type ConnectionStatus } from '../../services/realtime/so
 import { useAppDispatch, useAppSelector } from '../../store/hooks';
 import { useAppTheme } from '../../theme/ThemeProvider';
 
-const reactionOptions = ['👍', '❤️', '😂', '😮', '😢', '🙏'] as const;
 type Props = NativeStackScreenProps<RootStackParamList, 'Chat'>;
 
 export function ChatScreen({ navigation, route }: Props): React.JSX.Element {
   const { conversationId, counterpartId, title } = route.params;
   const dispatch = useAppDispatch();
-  const { colors, radii, spacing, typography } = useAppTheme();
+  const { colors, spacing } = useAppTheme();
+  const { showToast } = useToast();
   const counterpart = useGetUserQuery(counterpartId);
   const actorId = useAppSelector((state) => state.session.user?.id);
   const messages = useAppSelector((state) => selectConversationMessages(state, conversationId));
@@ -58,7 +58,6 @@ export function ChatScreen({ navigation, route }: Props): React.JSX.Element {
   const [connection, setConnection] = useState<ConnectionStatus>(socketManager.connectionStatus());
   const [cursor, setCursor] = useState<string | null>(null);
   const [hasMore, setHasMore] = useState(false);
-  const [actionError, setActionError] = useState<string | null>(null);
   const [actionMessage, setActionMessage] = useState<Message | null>(null);
   const [counterpartPresence, setCounterpartPresence] = useState<'online' | 'offline' | 'unknown'>(
     'unknown',
@@ -228,7 +227,7 @@ export function ChatScreen({ navigation, route }: Props): React.JSX.Element {
       }
       dispatch(removedForMe({ conversationId, messageId: message.id }));
     } catch {
-      setActionError('Message could not be removed.');
+      showToast({ type: 'error', title: 'Could not delete message', message: 'Please try again.' });
     }
   };
   const deleteForEveryone = async (message: Message): Promise<void> => {
@@ -241,7 +240,7 @@ export function ChatScreen({ navigation, route }: Props): React.JSX.Element {
         dispatch(authoritativeUpserted(await deleteEveryoneRest(message.id).unwrap()));
       }
     } catch {
-      setActionError('Message can no longer be deleted for everyone.');
+      showToast({ type: 'warning', title: 'Delete unavailable', message: 'This message can no longer be deleted for everyone.' });
     }
   };
   const toggleReaction = async (
@@ -261,7 +260,7 @@ export function ChatScreen({ navigation, route }: Props): React.JSX.Element {
         if (actorId !== undefined) dispatch(reactionApplied({ actorId, reaction }));
       }
     } catch {
-      setActionError('Reaction could not be updated.');
+      showToast({ type: 'error', title: 'Reaction failed', message: 'Could not update this reaction.' });
     }
   };
   const menu = (message: Message): void => setActionMessage(message);
@@ -283,13 +282,6 @@ export function ChatScreen({ navigation, route }: Props): React.JSX.Element {
         typing={counterpartTyping}
       />
       <View style={[styles.messages, { paddingHorizontal: spacing.md }]}>
-      {actionError === null ? null : (
-        <Pressable accessibilityRole="button" onPress={() => setActionError(null)}>
-          <Text accessibilityLiveRegion="polite" style={[styles.error, { color: colors.danger }]}>
-            {actionError} Tap to dismiss.
-          </Text>
-        </Pressable>
-      )}
       <FlatList
         data={visible}
         inverted
@@ -309,6 +301,7 @@ export function ChatScreen({ navigation, route }: Props): React.JSX.Element {
                   : 'Delivered'
                 : undefined
             }
+            onSwipeLeft={() => setReplyTo(item)}
             onLongPress={() => menu(item)}
             onRetry={() => retry(item)}
             onToggleReaction={(emoji, active) => {
@@ -330,80 +323,14 @@ export function ChatScreen({ navigation, route }: Props): React.JSX.Element {
         }
       />
       </View>
-      <Modal
-        animationType="fade"
-        onRequestClose={() => setActionMessage(null)}
-        transparent
-        visible={actionMessage !== null}
-      >
-        <Pressable style={[styles.backdrop, { backgroundColor: colors.overlay }]} onPress={() => setActionMessage(null)}>
-          <View style={[styles.sheet, { backgroundColor: colors.surface, borderTopLeftRadius: radii.lg, borderTopRightRadius: radii.lg }]}>
-            <Text accessibilityRole="header" style={[typography.title, { color: colors.text }]}>
-              Message actions
-            </Text>
-            {actionMessage !== null && !actionMessage.id.startsWith('local:') ? (
-              <>
-                <Pressable
-                  accessibilityRole="button"
-                  onPress={() => {
-                    setReplyTo(actionMessage);
-                    setActionMessage(null);
-                  }}
-                >
-                  <Text style={[typography.body, { color: colors.primary, paddingVertical: spacing.sm }]}>Reply</Text>
-                </Pressable>
-                {actionMessage.text === null ? null : (
-                  <View style={styles.reactionChoices}>
-                    {reactionOptions.map((emoji) => (
-                      <Pressable
-                        accessibilityLabel={`React ${emoji}`}
-                        accessibilityRole="button"
-                        key={emoji}
-                        onPress={() => {
-                          const active = !(
-                            actionMessage.reactions.find((value) => value.emoji === emoji)
-                              ?.reactedByMe ?? false
-                          );
-                          void toggleReaction(actionMessage, emoji, active);
-                          setActionMessage(null);
-                        }}
-                        style={styles.reactionChoice}
-                      >
-                        <Text>{emoji}</Text>
-                      </Pressable>
-                    ))}
-                  </View>
-                )}
-                <Pressable
-                  accessibilityRole="button"
-                  onPress={() => {
-                    void deleteForMe(actionMessage);
-                    setActionMessage(null);
-                  }}
-                >
-                  <Text style={[typography.body, { color: colors.danger, paddingVertical: spacing.sm }]}>Delete for me</Text>
-                </Pressable>
-                {actionMessage.senderId === actorId ? (
-                  <Pressable
-                    accessibilityRole="button"
-                    onPress={() => {
-                      void deleteForEveryone(actionMessage);
-                      setActionMessage(null);
-                    }}
-                  >
-                    <Text style={[typography.body, { color: colors.danger, paddingVertical: spacing.sm }]}>Delete for everyone</Text>
-                  </Pressable>
-                ) : null}
-              </>
-            ) : (
-              <Text style={[styles.empty, { color: colors.textMuted }]}>Wait for this message to finish sending.</Text>
-            )}
-            <Pressable accessibilityRole="button" onPress={() => setActionMessage(null)}>
-              <Text style={[typography.body, { color: colors.primary, paddingVertical: spacing.sm }]}>Cancel</Text>
-            </Pressable>
-          </View>
-        </Pressable>
-      </Modal>
+      <MessageActionsModal
+        actorId={actorId}
+        message={actionMessage}
+        onClose={() => setActionMessage(null)}
+        onDeleteEveryone={(message) => void deleteForEveryone(message)}
+        onDeleteMe={(message) => void deleteForMe(message)}
+        onReact={(message, emoji, active) => void toggleReaction(message, emoji, active)}
+      />
       <View style={{ paddingHorizontal: spacing.md }}>
         <MessageComposer
         onCancelReply={() => setReplyTo(null)}
@@ -419,8 +346,4 @@ const styles = StyleSheet.create({
   messages: { flex: 1 },
   error: { padding: 8, textAlign: 'center' },
   empty: { padding: 24, textAlign: 'center' },
-  backdrop: { flex: 1, justifyContent: 'flex-end' },
-  sheet: { gap: 8, padding: 20 },
-  reactionChoices: { flexDirection: 'row', justifyContent: 'space-between' },
-  reactionChoice: { padding: 8 },
 });

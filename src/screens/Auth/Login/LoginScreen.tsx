@@ -9,6 +9,7 @@ import { useLoginMutation } from '../../../services/api/authApi';
 import { AuthLayout } from '../../../components/AuthLayout/AuthLayout';
 import { FormField } from '../../../components/FormField/FormField';
 import { PrimaryButton } from '../../../components/Button/Button';
+import { useToast } from '../../../components/Toast/ToastProvider';
 import type { RootStackParamList } from '../../../navigation/types';
 import { useAppDispatch } from '../../../store/hooks';
 import { useAppTheme } from '../../../theme/ThemeProvider';
@@ -22,6 +23,7 @@ type Props = NativeStackScreenProps<RootStackParamList, 'Login'>;
 
 export function LoginScreen({ navigation }: Props): React.JSX.Element {
   const dispatch = useAppDispatch();
+  const { showToast } = useToast();
   const { colors, spacing, typography } = useAppTheme();
   const [login, request] = useLoginMutation();
   const { control, handleSubmit } = useForm<Values>({
@@ -31,9 +33,10 @@ export function LoginScreen({ navigation }: Props): React.JSX.Element {
   const submit = handleSubmit(async (values) => {
     try {
       const pair = await login(values).unwrap();
+      showToast({ type: 'success', title: 'Welcome back', message: 'Signed in successfully.' });
       await persistTokenPair(pair, dispatch);
-    } catch {
-      /* rendered from request state */
+    } catch (error) {
+      showToast({ type: 'error', title: 'Login failed', message: authErrorMessage(error) });
     }
   });
   return (
@@ -81,11 +84,6 @@ export function LoginScreen({ navigation }: Props): React.JSX.Element {
           />
         )}
       />
-      {request.error === undefined ? null : (
-        <Text accessibilityLiveRegion="polite" style={[typography.label, { color: colors.danger }]}>
-          {authErrorMessage(request.error)}
-        </Text>
-      )}
       <PrimaryButton
         label="Log in"
         loading={request.isLoading}

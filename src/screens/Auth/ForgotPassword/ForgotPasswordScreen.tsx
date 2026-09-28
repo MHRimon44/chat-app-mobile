@@ -8,6 +8,7 @@ import { authErrorMessage } from '../../../utils/errorMessage';
 import { AuthLayout } from '../../../components/AuthLayout/AuthLayout';
 import { FormField } from '../../../components/FormField/FormField';
 import { PrimaryButton } from '../../../components/Button/Button';
+import { useToast } from '../../../components/Toast/ToastProvider';
 import type { RootStackParamList } from '../../../navigation/types';
 import { useAppTheme } from '../../../theme/ThemeProvider';
 
@@ -17,6 +18,7 @@ export function ForgotPasswordScreen(
   _props: NativeStackScreenProps<RootStackParamList, 'ForgotPassword'>,
 ): React.JSX.Element {
   const { navigation } = _props;
+  const { showToast } = useToast();
   const { colors, typography } = useAppTheme();
   const [forgot, request] = useForgotPasswordMutation();
   const { control, handleSubmit } = useForm<Values>({
@@ -26,8 +28,9 @@ export function ForgotPasswordScreen(
   const submit = handleSubmit(async (values) => {
     try {
       await forgot(values).unwrap();
-    } catch {
-      /* rendered from request state */
+      showToast({ type: 'success', title: 'Check your email', message: 'Reset instructions were sent if the account exists.' });
+    } catch (error) {
+      showToast({ type: 'error', title: 'Request failed', message: authErrorMessage(error) });
     }
   });
   return (
@@ -59,19 +62,6 @@ export function ForgotPasswordScreen(
           />
         )}
       />
-      {request.isSuccess ? (
-        <Text
-          accessibilityLiveRegion="polite"
-          style={[typography.label, { color: colors.success }]}
-        >
-          Check your email for the next step.
-        </Text>
-      ) : null}
-      {request.error === undefined ? null : (
-        <Text accessibilityLiveRegion="polite" style={[typography.label, { color: colors.danger }]}>
-          {authErrorMessage(request.error)}
-        </Text>
-      )}
       <PrimaryButton
         label="Send reset instructions"
         loading={request.isLoading}

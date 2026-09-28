@@ -1,15 +1,14 @@
 import { zodResolver } from '@hookform/resolvers/zod';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { Controller, useForm } from 'react-hook-form';
-import { Text } from 'react-native';
 import { z } from 'zod';
 import { useResetPasswordMutation } from '../../../services/api/authApi';
 import { authErrorMessage } from '../../../utils/errorMessage';
 import { AuthLayout } from '../../../components/AuthLayout/AuthLayout';
 import { FormField } from '../../../components/FormField/FormField';
 import { PrimaryButton } from '../../../components/Button/Button';
+import { useToast } from '../../../components/Toast/ToastProvider';
 import type { RootStackParamList } from '../../../navigation/types';
-import { useAppTheme } from '../../../theme/ThemeProvider';
 
 const schema = z.object({
   token: z.string().min(40, 'Enter the reset token.'),
@@ -18,7 +17,7 @@ const schema = z.object({
 type Values = z.infer<typeof schema>;
 type Props = NativeStackScreenProps<RootStackParamList, 'ResetPassword'>;
 export function ResetPasswordScreen({ navigation, route }: Props): React.JSX.Element {
-  const { colors, typography } = useAppTheme();
+  const { showToast } = useToast();
   const [reset, request] = useResetPasswordMutation();
   const { control, handleSubmit } = useForm<Values>({
     defaultValues: { password: '', token: route.params?.token ?? '' },
@@ -27,9 +26,10 @@ export function ResetPasswordScreen({ navigation, route }: Props): React.JSX.Ele
   const submit = handleSubmit(async (values) => {
     try {
       await reset(values).unwrap();
+      showToast({ type: 'success', title: 'Password updated', message: 'You can now sign in with your new password.' });
       navigation.replace('Login');
-    } catch {
-      /* rendered from request state */
+    } catch (error) {
+      showToast({ type: 'error', title: 'Reset failed', message: authErrorMessage(error) });
     }
   });
   return (
@@ -67,11 +67,6 @@ export function ResetPasswordScreen({ navigation, route }: Props): React.JSX.Ele
           />
         )}
       />
-      {request.error === undefined ? null : (
-        <Text accessibilityLiveRegion="polite" style={[typography.label, { color: colors.danger }]}>
-          {authErrorMessage(request.error)}
-        </Text>
-      )}
       <PrimaryButton
         label="Update password"
         loading={request.isLoading}

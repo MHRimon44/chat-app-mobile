@@ -7,6 +7,7 @@ import { SettingsAction } from '../../components/Settings/SettingsAction';
 import { SettingsRow } from '../../components/Settings/SettingsRow';
 import { SettingsSection } from '../../components/Settings/SettingsSection';
 import { Screen } from '../../components/Screen/Screen';
+import { useToast } from '../../components/Toast/ToastProvider';
 import type { RootStackParamList } from '../../navigation/types';
 import { useLogoutAllMutation, useLogoutMutation } from '../../services/api/authApi';
 import { clearSession } from '../../services/auth/refreshCoordinator';
@@ -22,6 +23,7 @@ type Props = NativeStackScreenProps<RootStackParamList, 'Settings'>;
 
 export function SettingsScreen({ navigation }: Props): React.JSX.Element {
   const dispatch = useAppDispatch();
+  const { showToast } = useToast();
   const sessionUser = useAppSelector((state) => state.session.user);
   const profile = useGetMyProfileQuery();
   const [updateProfile, update] = useUpdateMyProfileMutation();
@@ -30,11 +32,22 @@ export function SettingsScreen({ navigation }: Props): React.JSX.Element {
   const { preference, setPreference, spacing } = useAppTheme();
   const user = profile.data ?? sessionUser;
 
+
+  const changeTheme = async (value: ThemePreference): Promise<void> => {
+    try {
+      await setPreference(value);
+      showToast({ type: 'success', title: 'Theme updated', message: `Alap is using ${value} mode.` });
+    } catch {
+      showToast({ type: 'error', title: 'Theme update failed', message: 'Please try again.' });
+    }
+  };
+
   const changePresence = async (value: PresenceVisibility): Promise<void> => {
     try {
       await updateProfile({ presenceVisibility: value }).unwrap();
+      showToast({ type: 'success', title: 'Privacy updated', message: `Online status visibility: ${value}.` });
     } catch {
-      Alert.alert('Could not update privacy', 'Please try again.');
+      showToast({ type: 'error', title: 'Could not update privacy', message: 'Please try again.' });
     }
   };
 
@@ -43,7 +56,7 @@ export function SettingsScreen({ navigation }: Props): React.JSX.Element {
       if (allDevices) await logoutAll().unwrap();
       else await logout().unwrap();
     } catch {
-      // Local credentials are still cleared below.
+      showToast({ type: 'warning', title: 'Signed out locally', message: 'The server could not confirm the logout.' });
     } finally {
       await clearSession(dispatch);
     }
@@ -79,7 +92,7 @@ export function SettingsScreen({ navigation }: Props): React.JSX.Element {
           <ChoicePills<ThemePreference>
             options={['system', 'light', 'dark']}
             selected={preference}
-            onSelect={(value) => void setPreference(value)}
+            onSelect={(value) => void changeTheme(value)}
           />
         </SettingsRow>
       </SettingsSection>

@@ -2584,6 +2584,16 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@react-native-community/netinfo@npm:^12.0.1":
+  version: 12.0.1
+  resolution: "@react-native-community/netinfo@npm:12.0.1"
+  peerDependencies:
+    react: "*"
+    react-native: ">=0.59"
+  checksum: 10c0/66c5fab04ef3ffe9b1f2e3578e7d3052a8c3ae327d94fa41f7d95ec4db3de4dd4017bf486013f031cb1aa12909002492474f259ea6212471f730cca39239dd35
+  languageName: node
+  linkType: hard
+
 "@react-native/asset-utils@npm:0.87.0":
   version: 0.87.0
   resolution: "@react-native/asset-utils@npm:0.87.0"
@@ -4161,6 +4171,7 @@ __metadata:
     "@react-native-community/cli": "npm:20.2.0"
     "@react-native-community/cli-platform-android": "npm:20.2.0"
     "@react-native-community/cli-platform-ios": "npm:20.2.0"
+    "@react-native-community/netinfo": "npm:^12.0.1"
     "@react-native/babel-preset": "npm:0.87.0"
     "@react-native/jest-preset": "npm:0.87.0"
     "@react-native/metro-config": "npm:0.87.0"

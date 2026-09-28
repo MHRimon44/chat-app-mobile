@@ -2,7 +2,6 @@ import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import {
   ActivityIndicator,
-  Alert,
   FlatList,
   Pressable,
   StyleSheet,
@@ -151,26 +150,13 @@ export function ConversationListScreen({ navigation }: Props): React.JSX.Element
     [user?.id],
   );
 
-  const confirmHide = (conversation: Conversation): void => {
-    Alert.alert(
-      'Hide conversation?',
-      `This removes ${conversation.counterpart.displayName} from your chat list. A new message will restore it.`,
-      [
-        { text: 'Cancel', style: 'cancel' },
-        {
-          text: 'Hide',
-          style: 'destructive',
-          onPress: () => {
-            void hide(conversation.id)
-              .unwrap()
-              .then(() =>
-                setItems((current) => current.filter((item) => item.id !== conversation.id)),
-              )
-              .catch(() => undefined);
-          },
-        },
-      ],
-    );
+  const hideConversation = (conversation: Conversation): void => {
+    void hide(conversation.id)
+      .unwrap()
+      .then(() =>
+        setItems((current) => current.filter((item) => item.id !== conversation.id)),
+      )
+      .catch(() => undefined);
   };
 
   const openConversation = (item: Conversation): void => {
@@ -256,7 +242,7 @@ export function ConversationListScreen({ navigation }: Props): React.JSX.Element
             conversation={item}
             latestMessage={latestMessages[item.id]}
             actorId={user?.id}
-            onHide={() => confirmHide(item)}
+            onHide={() => hideConversation(item)}
             onPress={() => openConversation(item)}
           />
         )}

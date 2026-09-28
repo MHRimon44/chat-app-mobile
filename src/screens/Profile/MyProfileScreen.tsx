@@ -7,6 +7,7 @@ import { Avatar } from '../../components/Avatar/Avatar';
 import { PrimaryButton } from '../../components/Button/Button';
 import { FormField } from '../../components/FormField/FormField';
 import { Screen } from '../../components/Screen/Screen';
+import { useToast } from '../../components/Toast/ToastProvider';
 import type { RootStackParamList } from '../../navigation/types';
 import { useGetMyProfileQuery, useUpdateMyProfileMutation } from '../../services/api/profileApi';
 import { useAppDispatch } from '../../store/hooks';
@@ -18,13 +19,13 @@ type Props = NativeStackScreenProps<RootStackParamList, 'MyProfile'>;
 
 export function MyProfileScreen({}: Props): React.JSX.Element {
   const dispatch = useAppDispatch();
+  const { showToast } = useToast();
   const profile = useGetMyProfileQuery();
   const [updateProfile, update] = useUpdateMyProfileMutation();
   const { colors, radii, spacing, typography } = useAppTheme();
   const [username, setUsername] = useState('');
   const [displayName, setDisplayName] = useState('');
   const [bio, setBio] = useState('');
-  const [saved, setSaved] = useState(false);
 
   useEffect(() => {
     if (!profile.data) return;
@@ -34,7 +35,6 @@ export function MyProfileScreen({}: Props): React.JSX.Element {
   }, [profile.data]);
 
   const save = async (): Promise<void> => {
-    setSaved(false);
     try {
       const result = await updateProfile({ username, displayName, bio }).unwrap();
       dispatch(
@@ -45,9 +45,9 @@ export function MyProfileScreen({}: Props): React.JSX.Element {
           email: result.email,
         }),
       );
-      setSaved(true);
-    } catch {
-      // Safe API error is rendered below.
+      showToast({ type: 'success', title: 'Profile updated', message: 'Your changes have been saved.' });
+    } catch (error) {
+      showToast({ type: 'error', title: 'Update failed', message: authErrorMessage(error) });
     }
   };
 
@@ -145,16 +145,6 @@ export function MyProfileScreen({}: Props): React.JSX.Element {
             </View>
           </View>
 
-          {update.error ? (
-            <Text style={[typography.caption, { color: colors.danger }]}>
-              {authErrorMessage(update.error)}
-            </Text>
-          ) : null}
-          {saved ? (
-            <Text style={[typography.caption, { color: colors.success }]}>
-              Profile updated successfully.
-            </Text>
-          ) : null}
           <PrimaryButton
             label="Save changes"
             loading={update.isLoading}
