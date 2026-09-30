@@ -14,10 +14,9 @@ import { useAppTheme } from '../../../theme/ThemeProvider';
 
 const schema = z.object({ email: z.email('Enter a valid email address.') });
 type Values = z.infer<typeof schema>;
-export function ForgotPasswordScreen(
-  _props: NativeStackScreenProps<RootStackParamList, 'ForgotPassword'>,
-): React.JSX.Element {
-  const { navigation } = _props;
+type Props = NativeStackScreenProps<RootStackParamList, 'ForgotPassword'>;
+
+export function ForgotPasswordScreen({ navigation }: Props): React.JSX.Element {
   const { showToast } = useToast();
   const { colors, typography } = useAppTheme();
   const [forgot, request] = useForgotPasswordMutation();
@@ -25,18 +24,28 @@ export function ForgotPasswordScreen(
     defaultValues: { email: '' },
     resolver: zodResolver(schema),
   });
+
   const submit = handleSubmit(async (values) => {
+    const email = values.email.trim().toLowerCase();
     try {
-      await forgot(values).unwrap();
-      showToast({ type: 'success', title: 'Check your email', message: 'Reset instructions were sent if the account exists.' });
+      const response = await forgot({ email }).unwrap();
+      console.log('forgot response:', response);
+      showToast({
+        type: 'success',
+        title: 'Check your email',
+        message: 'If the account exists, a 6-digit reset code has been sent.',
+      });
+      navigation.navigate('VerifyResetOtp', { email });
     } catch (error) {
+      console.log('forgot password request failed:', error);
       showToast({ type: 'error', title: 'Request failed', message: authErrorMessage(error) });
     }
   });
+
   return (
     <AuthLayout
       icon="lock-reset"
-      subtitle="Enter your email and we’ll send you the next step to securely reset your password."
+      subtitle="Enter your email and we’ll send a 6-digit code to reset your password."
       title="Forgot your password?"
       footer={
         <View style={{ flexDirection: 'row', alignItems: 'center' }}>
@@ -52,6 +61,7 @@ export function ForgotPasswordScreen(
         name="email"
         render={({ field, fieldState }) => (
           <FormField
+            autoCapitalize="none"
             autoComplete="email"
             error={fieldState.error?.message}
             keyboardType="email-address"
@@ -63,7 +73,7 @@ export function ForgotPasswordScreen(
         )}
       />
       <PrimaryButton
-        label="Send reset instructions"
+        label="Send reset code"
         loading={request.isLoading}
         onPress={() => {
           void submit();

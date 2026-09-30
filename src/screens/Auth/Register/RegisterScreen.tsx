@@ -5,13 +5,11 @@ import { Pressable, Text, View } from 'react-native';
 import { z } from 'zod';
 import { useRegisterMutation } from '../../../services/api/authApi';
 import { authErrorMessage } from '../../../utils/errorMessage';
-import { persistTokenPair } from '../../../services/auth/refreshCoordinator';
 import { AuthLayout } from '../../../components/AuthLayout/AuthLayout';
 import { FormField } from '../../../components/FormField/FormField';
 import { PrimaryButton } from '../../../components/Button/Button';
 import { useToast } from '../../../components/Toast/ToastProvider';
 import type { RootStackParamList } from '../../../navigation/types';
-import { useAppDispatch } from '../../../store/hooks';
 import { useAppTheme } from '../../../theme/ThemeProvider';
 
 const schema = z.object({
@@ -26,7 +24,6 @@ const schema = z.object({
 type Values = z.infer<typeof schema>;
 type Props = NativeStackScreenProps<RootStackParamList, 'Register'>;
 export function RegisterScreen({ navigation }: Props): React.JSX.Element {
-  const dispatch = useAppDispatch();
   const { showToast } = useToast();
   const { colors, typography } = useAppTheme();
   const [register, request] = useRegisterMutation();
@@ -36,10 +33,16 @@ export function RegisterScreen({ navigation }: Props): React.JSX.Element {
   });
   const submit = handleSubmit(async (values) => {
     try {
-      const pair = await register(values).unwrap();
-      showToast({ type: 'success', title: 'Account created', message: 'Welcome to Alap.' });
-      await persistTokenPair(pair, dispatch);
+      const response = await register(values).unwrap();
+      console.log('Registration successful:', response);
+      showToast({
+        type: 'success',
+        title: 'Verification code sent',
+        message: 'Check your email for the 6-digit code.',
+      });
+      navigation.navigate('VerifyRegistration', { email: values.email.trim().toLowerCase() });
     } catch (error) {
+      console.log('Registration failed:', error);
       showToast({ type: 'error', title: 'Registration failed', message: authErrorMessage(error) });
     }
   });
@@ -122,7 +125,7 @@ export function RegisterScreen({ navigation }: Props): React.JSX.Element {
         )}
       />
       <PrimaryButton
-        label="Create account"
+        label="Continue"
         loading={request.isLoading}
         onPress={() => {
           void submit();

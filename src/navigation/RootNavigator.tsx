@@ -6,6 +6,8 @@ import { ForgotPasswordScreen } from '../screens/Auth/ForgotPassword/ForgotPassw
 import { LoginScreen } from '../screens/Auth/Login/LoginScreen';
 import { RegisterScreen } from '../screens/Auth/Register/RegisterScreen';
 import { ResetPasswordScreen } from '../screens/Auth/ResetPassword/ResetPasswordScreen';
+import { VerifyRegistrationScreen } from '../screens/Auth/VerifyRegistration/VerifyRegistrationScreen';
+import { VerifyResetOtpScreen } from '../screens/Auth/VerifyResetOtp/VerifyResetOtpScreen';
 import { UserProfileScreen } from '../screens/Profile/UserProfileScreen';
 import { MyProfileScreen } from '../screens/Profile/MyProfileScreen';
 import { UserSearchScreen } from '../screens/Search/UserSearchScreen';
@@ -34,7 +36,9 @@ export function RootNavigator(): React.JSX.Element {
           <Stack.Screen name="Welcome" component={WelcomeScreen} />
           <Stack.Screen name="Login" component={LoginScreen} />
           <Stack.Screen name="Register" component={RegisterScreen} />
+          <Stack.Screen name="VerifyRegistration" component={VerifyRegistrationScreen} />
           <Stack.Screen name="ForgotPassword" component={ForgotPasswordScreen} />
+          <Stack.Screen name="VerifyResetOtp" component={VerifyResetOtpScreen} />
           <Stack.Screen name="ResetPassword" component={ResetPasswordScreen} />
         </Stack.Group>
       )}

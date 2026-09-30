@@ -4,6 +4,10 @@ import type { ApiEnvelope, TokenPair } from '../../@types/auth';
 
 type LoginInput = { email: string; password: string };
 type RegisterInput = LoginInput & { displayName: string; username: string };
+type MessageResponse = { message: string };
+type VerifyRegistrationInput = { email: string; otp: string };
+type VerifyResetOtpInput = { email: string; otp: string };
+type VerifyResetOtpResponse = { resetToken: string };
 
 export const authApi = api.injectEndpoints({
   endpoints: (build) => ({
@@ -15,17 +19,29 @@ export const authApi = api.injectEndpoints({
       }),
       transformResponse: (response: ApiEnvelope<TokenPair>) => response.data,
     }),
-    register: build.mutation<TokenPair, RegisterInput>({
+    register: build.mutation<MessageResponse, RegisterInput>({
       query: (body) => ({
         body: { ...body, device: getDeviceMetadata() },
         method: 'POST',
         url: '/v1/auth/register',
       }),
+      transformResponse: (response: ApiEnvelope<MessageResponse>) => response.data,
+    }),
+    verifyRegistration: build.mutation<TokenPair, VerifyRegistrationInput>({
+      query: (body) => ({
+        body: { ...body, device: getDeviceMetadata() },
+        method: 'POST',
+        url: '/v1/auth/register/verify',
+      }),
       transformResponse: (response: ApiEnvelope<TokenPair>) => response.data,
     }),
-    forgotPassword: build.mutation<{ accepted: boolean }, { email: string }>({
+    forgotPassword: build.mutation<MessageResponse, { email: string }>({
       query: (body) => ({ body, method: 'POST', url: '/v1/auth/password/forgot' }),
-      transformResponse: (response: ApiEnvelope<{ accepted: boolean }>) => response.data,
+      transformResponse: (response: ApiEnvelope<MessageResponse>) => response.data,
+    }),
+    verifyPasswordResetOtp: build.mutation<VerifyResetOtpResponse, VerifyResetOtpInput>({
+      query: (body) => ({ body, method: 'POST', url: '/v1/auth/password/verify-otp' }),
+      transformResponse: (response: ApiEnvelope<VerifyResetOtpResponse>) => response.data,
     }),
     resetPassword: build.mutation<void, { password: string; token: string }>({
       query: (body) => ({ body, method: 'POST', url: '/v1/auth/password/reset' }),
@@ -46,4 +62,6 @@ export const {
   useLogoutMutation,
   useRegisterMutation,
   useResetPasswordMutation,
+  useVerifyPasswordResetOtpMutation,
+  useVerifyRegistrationMutation,
 } = authApi;
