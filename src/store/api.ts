@@ -7,7 +7,7 @@ import {
 } from '@reduxjs/toolkit/query/react';
 import { environment } from '../config/environment';
 import type { RootState } from './store';
-import { refreshSession } from '../auth/refreshCoordinator';
+import { refreshSession } from '../services/auth/refreshCoordinator';
 const rawBaseQuery = fetchBaseQuery({
   baseUrl: environment.apiBaseUrl,
   prepareHeaders(headers, { getState }) {

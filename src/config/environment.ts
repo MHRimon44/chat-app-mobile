@@ -1,28 +1,16 @@
-export function resolveDevelopmentHost(scriptUrl: unknown, platform: string): string {
-  if (typeof scriptUrl === 'string') {
-    try {
-      const hostname = new URL(scriptUrl).hostname;
-
-      if (hostname) {
-        return hostname;
-      }
-    } catch {
-      // Fall through to a platform-safe development default.
-    }
-  }
-
-  return platform === 'android' ? '10.0.2.2' : 'localhost';
-}
-
-const PRODUCTION_API_URL = 'https://chat-app-backend-2s97.onrender.com';
+// These references are replaced with .env literals by Babel during bundling.
+declare const process: {
+  env: { APP_ENV: string; API_BASE_URL: string; SOCKET_BASE_URL: string };
+};
 
 export const environment = {
-  apiBaseUrl: PRODUCTION_API_URL,
-  socketBaseUrl: PRODUCTION_API_URL,
+  name: process.env.APP_ENV,
+  apiBaseUrl: process.env.API_BASE_URL,
+  socketBaseUrl: process.env.SOCKET_BASE_URL,
 } as const;
 
 export function assertSecureProductionTransport(url: string): void {
-  if (!__DEV__ && !url.startsWith('https://')) {
+  if ((environment.name === 'production' || !__DEV__) && !url.startsWith('https://')) {
     throw new Error('Production transport must use HTTPS/WSS');
   }
 }

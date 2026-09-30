@@ -1,8 +1,8 @@
 import { createListenerMiddleware } from '@reduxjs/toolkit';
-import { authoritativeUpserted } from '../messages/messageSlice';
-import type { Message, ReceiptChange } from '../messages/types';
-import { socketManager } from '../realtime/socketManager';
-import { signedIn, signedOut } from './sessionSlice';
+import { authoritativeUpserted } from './slices/messageSlice';
+import type { Message, ReceiptChange } from '../@types/message';
+import { socketManager } from '../services/realtime/socketManager';
+import { signedIn, signedOut } from './slices/sessionSlice';
 export const listenerMiddleware = createListenerMiddleware();
 let removeMessageListener: (() => void) | null = null;
 listenerMiddleware.startListening({
