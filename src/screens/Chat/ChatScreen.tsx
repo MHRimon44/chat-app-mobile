@@ -126,7 +126,19 @@ export function ChatScreen({ navigation, route }: Props): React.JSX.Element {
     void loadPage(false);
     let typingTimer: ReturnType<typeof setTimeout> | undefined;
     const cleanups = [
-      socketManager.onStatus(setConnection),
+      socketManager.onStatus((status) => {
+        setConnection(status);
+        if (status === 'connected') {
+          void socketManager.emitWithAck<PresenceChange>('presence:get', { userId: counterpartId })
+            .then((presence) => {
+              setCounterpartPresence(presence.status);
+              setCounterpartLastSeenAt(presence.lastSeenAt);
+            }).catch(() => setCounterpartPresence('unknown'));
+        } else {
+          setCounterpartPresence('unknown');
+          setCounterpartLastSeenAt(undefined);
+        }
+      }),
       socketManager.on<Message>('message:created', (message) => {
         if (message.conversationId === conversationId) dispatch(authoritativeUpserted(message));
         if (message.conversationId === conversationId && message.senderId === counterpartId) {
@@ -153,7 +165,7 @@ export function ChatScreen({ navigation, route }: Props): React.JSX.Element {
       socketManager.on<PresenceChange>('presence:changed', (presence) => {
         if (presence.userId === counterpartId) {
           setCounterpartPresence(presence.status);
-          if (presence.lastSeenAt !== undefined) setCounterpartLastSeenAt(presence.lastSeenAt);
+          setCounterpartLastSeenAt(presence.lastSeenAt);
         }
       }),
       socketManager.on<ReceiptChange>('receipt:changed', (receipt) => {
@@ -272,6 +284,7 @@ export function ChatScreen({ navigation, route }: Props): React.JSX.Element {
       header={false}
     >
       <ChatHeader
+        userId={counterpartId}
         avatarUrl={counterpart.data?.avatarUrl}
         connected={connection === 'connected'}
         lastSeenAt={counterpartLastSeenAt}

@@ -9,7 +9,7 @@ import {
   View,
 } from 'react-native';
 import type { Conversation } from '../../@types/chat';
-import type { Message } from '../../@types/message';
+import type { Message, PresenceChange } from '../../@types/message';
 import { AppBrand } from '../../components/AppBrand/AppBrand';
 import { EmptyState } from '../../components/EmptyState/EmptyState';
 import { FilterChip } from '../../components/FilterChip/FilterChip';
@@ -38,6 +38,8 @@ export function ConversationListScreen({ navigation }: Props): React.JSX.Element
   const [cursor, setCursor] = useState<string | null>(null);
   const [hasMore, setHasMore] = useState(false);
   const [filter, setFilter] = useState<Filter>('all');
+  const [presenceByUser, setPresenceByUser] = useState<Record<string, PresenceChange>>({});
+  const [, setClockTick] = useState(0);
   const [latestMessages, setLatestMessages] = useState<Record<string, Message>>({});
   const [initialLoading, setInitialLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
@@ -154,6 +156,31 @@ export function ConversationListScreen({ navigation }: Props): React.JSX.Element
       }),
     [user?.id],
   );
+
+  useEffect(() => {
+    const refreshPresence = (): void => {
+      if (socketManager.connectionStatus() !== 'connected') return;
+      for (const conversation of items) {
+        const userId = conversation.counterpart.id;
+        void socketManager.emitWithAck<PresenceChange>('presence:get', { userId })
+          .then((presence) => setPresenceByUser((current) => ({ ...current, [userId]: presence })))
+          .catch(() => undefined);
+      }
+    };
+    const stopStatus = socketManager.onStatus((status) => {
+      if (status === 'connected') refreshPresence();
+      else setPresenceByUser({});
+    });
+    const stopEvents = socketManager.on<PresenceChange>('presence:changed', (presence) => {
+      setPresenceByUser((current) => ({ ...current, [presence.userId]: presence }));
+    });
+    return () => { stopStatus(); stopEvents(); };
+  }, [items]);
+
+  useEffect(() => {
+    const timer = setInterval(() => setClockTick((value) => value + 1), 30_000);
+    return () => clearInterval(timer);
+  }, []);
 
   const hideConversation = (conversation: Conversation): void => {
     closeSwipeAction();
@@ -279,6 +306,7 @@ export function ConversationListScreen({ navigation }: Props): React.JSX.Element
             conversation={item}
             latestMessage={latestMessages[item.id]}
             actorId={user?.id}
+            presence={presenceByUser[item.counterpart.id]}
             isOpen={openConversationId === item.id}
             onOpen={() => setOpenConversationId(item.id)}
             onClose={closeSwipeAction}

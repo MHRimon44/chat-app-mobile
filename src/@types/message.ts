@@ -35,7 +35,7 @@ export type TypingChange = Readonly<{
 }>;
 export type PresenceChange = Readonly<{
   userId: string;
-  status: 'online' | 'offline';
+  status: 'online' | 'offline' | 'unknown';
   updatedAt: string;
   lastSeenAt?: string;
 }>;

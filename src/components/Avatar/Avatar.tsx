@@ -1,4 +1,5 @@
 import { Image, StyleSheet, Text, View } from 'react-native';
+import { useAvatarPresence } from '../../hooks/useAvatarPresence';
 import { initials } from '../../utils/listHelpers';
 import { useAppTheme } from '../../theme/ThemeProvider';
 
@@ -7,6 +8,7 @@ type Props = {
   imageUrl?: string | undefined;
   size?: number;
   online?: boolean;
+  userId?: string | undefined;
 };
 
 export function Avatar({
@@ -14,8 +16,10 @@ export function Avatar({
   imageUrl,
   size = 48,
   online = false,
+  userId,
 }: Props): React.JSX.Element {
   const { colors, radii } = useAppTheme();
+  const presenceOnline = useAvatarPresence(userId);
   const avatarStyle = {
     width: size,
     height: size,
@@ -40,7 +44,7 @@ export function Avatar({
           </Text>
         </View>
       )}
-      {online ? (
+      {(userId ? presenceOnline : online) ? (
         <View
           accessibilityLabel="Online"
           style={[

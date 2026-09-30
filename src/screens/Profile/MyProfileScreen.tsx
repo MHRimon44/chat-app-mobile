@@ -72,7 +72,7 @@ export function MyProfileScreen({}: Props): React.JSX.Element {
         <>
           <View style={styles.identity}>
             <View style={styles.avatarWrap}>
-              <Avatar displayName={profile.data.displayName} size={88} />
+              <Avatar displayName={profile.data.displayName} userId={profile.data.id} size={88} />
               <View
                 style={[
                   styles.editBadge,

@@ -1,3 +1,4 @@
+import type { PresenceChange } from '../../@types/message';
 import { Animated, PanResponder, Pressable, StyleSheet, Text, View } from 'react-native';
 import { useEffect, useMemo, useRef } from 'react';
 import type { Conversation } from '../../@types/chat';
@@ -25,6 +26,7 @@ export function ConversationRow({
   onPress,
   latestMessage,
   actorId,
+  presence,
   isOpen,
   onOpen,
   onClose,
@@ -34,6 +36,7 @@ export function ConversationRow({
   onPress: () => void;
   latestMessage?: Message | undefined;
   actorId?: string | undefined;
+  presence?: PresenceChange | undefined;
   isOpen: boolean;
   onOpen: () => void;
   onClose: () => void;
@@ -125,6 +128,7 @@ export function ConversationRow({
             displayName={conversation.counterpart.displayName}
             imageUrl={conversation.counterpart.avatarUrl}
             size={56}
+            userId={conversation.counterpart.id}
           />
 
           <View style={[styles.copy, { gap: spacing.xs }]}>

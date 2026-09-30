@@ -28,7 +28,7 @@ export function UserRow({
         },
       ]}
     >
-      <Avatar displayName={user.displayName} imageUrl={user.avatarUrl} size={50} />
+      <Avatar displayName={user.displayName} imageUrl={user.avatarUrl} userId={user.id} size={50} />
       <View style={styles.copy}>
         <Text numberOfLines={1} style={[typography.body, styles.name, { color: colors.text }]}>
           {user.displayName}

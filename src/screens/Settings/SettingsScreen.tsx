@@ -11,6 +11,7 @@ import { useToast } from '../../components/Toast/ToastProvider';
 import type { RootStackParamList } from '../../navigation/types';
 import { useLogoutAllMutation, useLogoutMutation } from '../../services/api/authApi';
 import { clearSession } from '../../services/auth/refreshCoordinator';
+import { socketManager } from '../../services/realtime/socketManager';
 import {
   useGetMyProfileQuery,
   useUpdateMyProfileMutation,
@@ -45,6 +46,7 @@ export function SettingsScreen({ navigation }: Props): React.JSX.Element {
   const changePresence = async (value: PresenceVisibility): Promise<void> => {
     try {
       await updateProfile({ presenceVisibility: value }).unwrap();
+      void socketManager.emitWithAck('presence:visibilityChanged', {}).catch(() => undefined);
       showToast({ type: 'success', title: 'Privacy updated', message: `Online status visibility: ${value}.` });
     } catch {
       showToast({ type: 'error', title: 'Could not update privacy', message: 'Please try again.' });
@@ -81,6 +83,7 @@ export function SettingsScreen({ navigation }: Props): React.JSX.Element {
       keyboardAvoiding={false}
     >
       <ProfileSettingsCard
+        userId={user?.id}
         displayName={user?.displayName ?? 'Your profile'}
         username={user?.username}
         email={user?.email}

@@ -1,3 +1,5 @@
+import { useEffect, useState } from 'react';
+import { formatLastSeen } from '../../utils/presence';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { Avatar } from '../Avatar/Avatar';
 import { IconButton } from '../IconButton/IconButton';
@@ -7,6 +9,7 @@ type Presence = 'online' | 'offline' | 'unknown';
 
 type Props = {
   title: string;
+  userId?: string | undefined;
   avatarUrl?: string | undefined;
   presence: Presence;
   typing: boolean;
@@ -23,15 +26,11 @@ function statusText({
   typing,
 }: Pick<Props, 'connected' | 'lastSeenAt' | 'presence' | 'typing'>): string {
   if (!connected) return 'Connecting…';
+  if (presence === 'unknown') return 'Active status hidden';
   if (typing) return 'typing…';
   if (presence === 'online') return 'Active now';
   if (presence === 'offline' && lastSeenAt) {
-    const value = new Date(lastSeenAt);
-    const today = new Date();
-    const sameDay = value.toDateString() === today.toDateString();
-    return sameDay
-      ? `Active ${value.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`
-      : `Active ${value.toLocaleDateString([], { day: 'numeric', month: 'short' })}`;
+    return formatLastSeen(lastSeenAt) ?? 'Offline';
   }
   if (presence === 'offline') return 'Offline';
   return 'Active status unavailable';
@@ -40,6 +39,12 @@ function statusText({
 export function ChatHeader(props: Props): React.JSX.Element {
   const { colors, spacing, typography } = useAppTheme();
   const online = props.connected && props.presence === 'online';
+  const [, setClockTick] = useState(0);
+  useEffect(() => {
+    if (props.presence !== 'offline' || !props.lastSeenAt) return;
+    const timer = setInterval(() => setClockTick((value) => value + 1), 30_000);
+    return () => clearInterval(timer);
+  }, [props.lastSeenAt, props.presence]);
 
   return (
     <View
@@ -68,6 +73,7 @@ export function ChatHeader(props: Props): React.JSX.Element {
       >
         <Avatar
           displayName={props.title}
+          userId={props.userId}
           imageUrl={props.avatarUrl}
           online={online}
           size={42}

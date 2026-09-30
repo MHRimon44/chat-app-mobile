@@ -4,12 +4,14 @@ import { Avatar } from '../Avatar/Avatar';
 import { useAppTheme } from '../../theme/ThemeProvider';
 type Props = {
   displayName: string;
+  userId?: string | undefined;
   username?: string | undefined;
   email?: string | undefined;
   onPress: () => void;
 };
 export function ProfileSettingsCard({
   displayName,
+  userId,
   username,
   email,
   onPress,
@@ -29,7 +31,7 @@ export function ProfileSettingsCard({
         },
       ]}
     >
-      <Avatar displayName={displayName} size={64} />
+      <Avatar displayName={displayName} userId={userId} size={64} />
       <View style={styles.text}>
         <Text numberOfLines={1} style={[typography.title, { color: colors.text }]}>
           {displayName}

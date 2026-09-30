@@ -48,7 +48,7 @@ export function UserProfileScreen({ navigation, route }: Props): React.JSX.Eleme
         </View>
       ) : (
         <View style={[styles.content, { gap: spacing.lg }]}>
-          <Avatar displayName={profile.data.displayName} size={96} />
+          <Avatar displayName={profile.data.displayName} userId={profile.data.id} size={96} />
           <View style={styles.identity}>
             <Text
               accessibilityRole="header"
