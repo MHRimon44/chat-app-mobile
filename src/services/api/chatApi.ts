@@ -18,6 +18,21 @@ export const chatApi = api.injectEndpoints({
         ],
       },
     ),
+    listHiddenConversations: build.query<PageEnvelope<Conversation>, { cursor?: string; limit?: number }>(
+      {
+        query: ({ cursor, limit = 30 }) => ({
+          params: { ...(cursor === undefined ? {} : { cursor }), limit },
+          url: '/v1/conversations/hidden',
+        }),
+        providesTags: (result) => [
+          { id: 'HIDDEN_LIST', type: 'Conversation' },
+          ...(result?.data.map((conversation) => ({
+            id: conversation.id,
+            type: 'Conversation' as const,
+          })) ?? []),
+        ],
+      },
+    ),
     searchUsers: build.query<
       PageEnvelope<UserProfile>,
       { cursor?: string; limit?: number; query: string }
@@ -51,6 +66,17 @@ export const chatApi = api.injectEndpoints({
         { id: 'LIST', type: 'Conversation' },
       ],
     }),
+    unhideConversation: build.mutation<void, string>({
+      query: (conversationId) => ({
+        method: 'POST',
+        url: `/v1/conversations/${conversationId}/unhide`,
+      }),
+      invalidatesTags: (_result, _error, conversationId) => [
+        { id: conversationId, type: 'Conversation' },
+        { id: 'LIST', type: 'Conversation' },
+        { id: 'HIDDEN_LIST', type: 'Conversation' },
+      ],
+    }),
   }),
 });
 
@@ -58,6 +84,8 @@ export const {
   useCreateDirectConversationMutation,
   useGetUserQuery,
   useHideConversationMutation,
+  useLazyListHiddenConversationsQuery,
+  useUnhideConversationMutation,
   useLazyListConversationsQuery,
   useLazySearchUsersQuery,
 } = chatApi;

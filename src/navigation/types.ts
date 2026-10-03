@@ -8,6 +8,7 @@ export type RootStackParamList = {
   ResetPassword: { token: string };
   ConversationList: undefined;
   Settings: undefined;
+  HiddenChats: undefined;
   MyProfile: undefined;
   UserSearch: undefined;
   UserProfile: { userId: string };

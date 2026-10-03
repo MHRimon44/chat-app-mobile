@@ -116,6 +116,15 @@ export function SettingsScreen({ navigation }: Props): React.JSX.Element {
         </SettingsRow>
       </SettingsSection>
 
+      <SettingsSection title="Chats">
+        <SettingsAction
+          icon="eye-off-outline"
+          title="Hidden chats"
+          onPress={() => navigation.navigate('HiddenChats')}
+          last
+        />
+      </SettingsSection>
+
       <SettingsSection title="Account">
         <SettingsAction
           icon="logout"
