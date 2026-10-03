@@ -1,3 +1,4 @@
+import { authFeatures } from '../../../config/authFeatures';
 import { zodResolver } from '@hookform/resolvers/zod';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { Controller, useForm } from 'react-hook-form';
@@ -91,13 +92,15 @@ export function LoginScreen({ navigation }: Props): React.JSX.Element {
           void submit();
         }}
       />
-      <Pressable
-        accessibilityRole="button"
-        onPress={() => navigation.navigate('ForgotPassword')}
-        style={{ alignSelf: 'flex-end', paddingVertical: spacing.xs }}
-      >
-        <Text style={[typography.label, { color: colors.primary }]}>Forgot password?</Text>
-      </Pressable>
+      {authFeatures.forgotPasswordEnabled && (
+        <Pressable
+          accessibilityRole="button"
+          onPress={() => navigation.navigate('ForgotPassword')}
+          style={{ alignSelf: 'flex-end', paddingVertical: spacing.xs }}
+        >
+          <Text style={[typography.label, { color: colors.primary }]}>Forgot password?</Text>
+        </Pressable>
+      )}
     </AuthLayout>
   );
 }

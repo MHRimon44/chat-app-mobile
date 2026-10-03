@@ -1,3 +1,7 @@
+import { useRef } from 'react';
+import { authFeatures } from '../../../config/authFeatures';
+import { persistTokenPair } from '../../../services/auth/refreshCoordinator';
+import { useAppDispatch } from '../../../store/hooks';
 import { zodResolver } from '@hookform/resolvers/zod';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { Controller, useForm } from 'react-hook-form';
@@ -19,31 +23,41 @@ const schema = z.object({
     .regex(/^[a-zA-Z0-9_]{3,30}$/, 'Use 3–30 letters, numbers, or underscores.'),
   displayName: z.string().trim().min(1, 'Name is required.').max(80),
   email: z.email('Enter a valid email address.'),
-  password: z.string().min(12, 'Use at least 12 characters.').max(128),
+  password: z.string().min(6, 'Use at least 6 characters.').max(128),
 });
 type Values = z.infer<typeof schema>;
 type Props = NativeStackScreenProps<RootStackParamList, 'Register'>;
 export function RegisterScreen({ navigation }: Props): React.JSX.Element {
+  const dispatch = useAppDispatch();
+  const submitting = useRef(false);
   const { showToast } = useToast();
   const { colors, typography } = useAppTheme();
   const [register, request] = useRegisterMutation();
-  const { control, handleSubmit } = useForm<Values>({
+  const { control, handleSubmit, formState } = useForm<Values>({
     defaultValues: { username: '', displayName: '', email: '', password: '' },
     resolver: zodResolver(schema),
   });
   const submit = handleSubmit(async (values) => {
+    if (submitting.current) return;
+    submitting.current = true;
     try {
       const response = await register(values).unwrap();
-      console.log('Registration successful:', response);
-      showToast({
-        type: 'success',
-        title: 'Verification code sent',
-        message: 'Check your email for the 6-digit code.',
-      });
-      navigation.navigate('VerifyRegistration', { email: values.email.trim().toLowerCase() });
+      console.log('register response:', response);
+      if ('accessToken' in response) {
+        await persistTokenPair(response, dispatch);
+        showToast({ type: 'success', title: 'Account created', message: 'Welcome to Alap.' });
+      } else if (authFeatures.registrationOtpEnabled) {
+        showToast({
+          type: 'success',
+          title: 'Verification code sent',
+          message: 'Check your email for the 6-digit code.',
+        });
+        navigation.navigate('VerifyRegistration', { email: values.email.trim().toLowerCase() });
+      }
     } catch (error) {
-      console.log('Registration failed:', error);
       showToast({ type: 'error', title: 'Registration failed', message: authErrorMessage(error) });
+    } finally {
+      submitting.current = false;
     }
   });
   return (
@@ -126,7 +140,7 @@ export function RegisterScreen({ navigation }: Props): React.JSX.Element {
       />
       <PrimaryButton
         label="Continue"
-        loading={request.isLoading}
+        loading={request.isLoading || formState.isSubmitting}
         onPress={() => {
           void submit();
         }}

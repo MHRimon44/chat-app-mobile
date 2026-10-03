@@ -1,5 +1,5 @@
 import type { PropsWithChildren, ReactNode } from 'react';
-import { StyleSheet, Text, View } from 'react-native';
+import { Platform, StyleSheet, Text, View } from 'react-native';
 import { Screen } from '../Screen/Screen';
 import { AppIcon } from '../AppIcon/AppIcon';
 import { useAppTheme } from '../../theme/ThemeProvider';
@@ -23,7 +23,9 @@ export function AuthLayout({
   const { colors, spacing, radii, shadows, typography } = useAppTheme();
 
   return (
-    <Screen mode="auto" keyboardAvoiding padded={false}>
+    // Android already resizes the window via adjustResize. Avoid applying a
+    // second height adjustment when the keyboard opens on long auth forms.
+    <Screen mode="auto" keyboardAvoiding={Platform.OS === 'ios'} padded={false}>
       <View pointerEvents="none" style={[styles.glowTop, { backgroundColor: colors.cyan }]} />
       <View pointerEvents="none" style={[styles.glowBottom, { backgroundColor: colors.accent }]} />
 

@@ -12,7 +12,7 @@ import type { RootStackParamList } from '../../../navigation/types';
 
 const schema = z
   .object({
-    password: z.string().min(12, 'Use at least 12 characters.').max(128),
+    password: z.string().min(6, 'Use at least 6 characters.').max(128),
     confirmPassword: z.string().min(1, 'Confirm your new password.'),
   })
   .refine((values) => values.password === values.confirmPassword, {

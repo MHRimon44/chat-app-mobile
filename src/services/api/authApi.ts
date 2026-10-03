@@ -1,3 +1,5 @@
+import { z } from 'zod';
+import { authFeatures } from '../../config/authFeatures';
 import { api } from '../../store/api';
 import { getDeviceMetadata } from '../auth/deviceMetadata';
 import type { ApiEnvelope, TokenPair } from '../../@types/auth';
@@ -5,6 +7,31 @@ import type { ApiEnvelope, TokenPair } from '../../@types/auth';
 type LoginInput = { email: string; password: string };
 type RegisterInput = LoginInput & { displayName: string; username: string };
 type MessageResponse = { message: string };
+type RegistrationResponse = MessageResponse | TokenPair;
+
+// Direct registration uses the same session contract as login/verification.
+// Reject incomplete responses before writing credentials or claiming success.
+const tokenPairSchema = z.object({
+  accessToken: z.string().min(1),
+  accessTokenExpiresAt: z.iso.datetime(),
+  refreshToken: z.string().min(1),
+  user: z.object({
+    id: z.string().min(1),
+    username: z.string().optional(),
+    displayName: z.string(),
+    email: z.string(),
+  }),
+});
+const registrationOtpResponseSchema = z.object({ message: z.string() });
+
+export function parseRegistrationResponse(response: ApiEnvelope<unknown>): RegistrationResponse {
+  if (authFeatures.registrationOtpEnabled) {
+    return registrationOtpResponseSchema.parse(response.data);
+  }
+  const pair = tokenPairSchema.parse(response.data);
+  const { username, ...user } = pair.user;
+  return { ...pair, user: { ...user, ...(username === undefined ? {} : { username }) } };
+}
 type VerifyRegistrationInput = { email: string; otp: string };
 type VerifyResetOtpInput = { email: string; otp: string };
 type VerifyResetOtpResponse = { resetToken: string };
@@ -19,13 +46,13 @@ export const authApi = api.injectEndpoints({
       }),
       transformResponse: (response: ApiEnvelope<TokenPair>) => response.data,
     }),
-    register: build.mutation<MessageResponse, RegisterInput>({
+    register: build.mutation<RegistrationResponse, RegisterInput>({
       query: (body) => ({
         body: { ...body, device: getDeviceMetadata() },
         method: 'POST',
         url: '/v1/auth/register',
       }),
-      transformResponse: (response: ApiEnvelope<MessageResponse>) => response.data,
+      transformResponse: parseRegistrationResponse,
     }),
     verifyRegistration: build.mutation<TokenPair, VerifyRegistrationInput>({
       query: (body) => ({
