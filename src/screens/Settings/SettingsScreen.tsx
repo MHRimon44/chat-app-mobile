@@ -127,6 +127,11 @@ export function SettingsScreen({ navigation }: Props): React.JSX.Element {
 
       <SettingsSection title="Account">
         <SettingsAction
+          icon="lock-reset"
+          title="Change password"
+          onPress={() => navigation.navigate('ChangePassword')}
+        />
+        <SettingsAction
           icon="logout"
           title="Log out"
           onPress={() => void signOut(false)}

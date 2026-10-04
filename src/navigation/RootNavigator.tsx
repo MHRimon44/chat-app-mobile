@@ -14,6 +14,7 @@ import { MyProfileScreen } from '../screens/Profile/MyProfileScreen';
 import { UserSearchScreen } from '../screens/Search/UserSearchScreen';
 import { WelcomeScreen } from '../screens/Welcome/WelcomeScreen';
 import { SettingsScreen } from '../screens/Settings/SettingsScreen';
+import { ChangePasswordScreen } from '../screens/Settings/ChangePasswordScreen';
 import { HiddenChatsScreen } from '../screens/HiddenChats/HiddenChatsScreen';
 import { useAppSelector } from '../store/hooks';
 import type { RootStackParamList } from './types';
@@ -28,6 +29,7 @@ export function RootNavigator(): React.JSX.Element {
         <Stack.Group>
           <Stack.Screen name="ConversationList" component={ConversationListScreen} />
           <Stack.Screen name="Settings" component={SettingsScreen} />
+          <Stack.Screen name="ChangePassword" component={ChangePasswordScreen} />
           <Stack.Screen name="HiddenChats" component={HiddenChatsScreen} />
           <Stack.Screen name="MyProfile" component={MyProfileScreen} />
           <Stack.Screen name="UserSearch" component={UserSearchScreen} />

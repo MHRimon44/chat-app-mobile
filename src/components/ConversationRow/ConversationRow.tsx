@@ -26,7 +26,6 @@ export function ConversationRow({
   onPress,
   latestMessage,
   actorId,
-  presence,
   isOpen,
   onOpen,
   onClose,
@@ -167,7 +166,9 @@ export function ConversationRow({
               >
                 {latestMessage
                   ? `${latestMessage.senderId === actorId ? 'You: ' : ''}${
-                      latestMessage.deletedAt ? 'Message deleted' : (latestMessage.text ?? 'Message')
+                      latestMessage.deletedAt
+                        ? 'Message deleted'
+                        : (latestMessage.text ?? 'Message')
                     }`
                   : 'No messages yet'}
               </Text>
